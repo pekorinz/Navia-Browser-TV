@@ -1,31 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Menu rapido emergente, estilo Via "blanco".
-
-    Reproduce el menu real de Via: tarjeta blanca redondeada que baja desde
-    arriba, con una rejilla de iconos negro + etiqueta, y arriba a la derecha
-    el encendido y el chevron para cerrar.
-
-    Adaptado a TV:
-      - Ancho fijo en dp, no wrap_content: con wrap_content el panel crecia
-        hasta el ancho de la TV y las etiquetas quedaban lejisimos de sus iconos.
-      - Compacto a proposito, pero legible a 3 metros: iconos de 25dp y
-        etiquetas de 11sp.
-      - Pegado al borde derecho (gravity top|end), bajo el boton del sandwich.
-      - Foco: el aislamiento NO se hace con descendantFocusability. Ojo con
-        blocksDescendants en el overlay: no encierra el foco en los iconos,
-        BLOQUEA a todos sus descendientes (menus enteros sin poder enfocarse).
-        Aqui el overlay usa afterDescendants y el encierro real lo hace
-        MainActivity: apaga la pagina de atras y navega la rejilla a mano.
-      - La navegacion del D-pad la hace MainActivity a mano (moveFocusInGrid),
-        no el sistema: asi el foco no puede saltar a la pagina de atras.
-      - Rejilla de 4 columnas en vez de 5: en TV se ve a 3 metros.
+    Sombreado ligero y transparente, con barra superior (apagar y cerrar).
+    Cuadricula estricta de 4 columnas (espacio vacio al final de la fila 3 si falta un elemento).
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/quickMenuOverlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#99000000"
+    android:background="#45000000"
     android:clickable="true"
     android:descendantFocusability="afterDescendants"
     android:focusable="false"
@@ -35,13 +20,6 @@
     android:paddingEnd="12dp"
     android:visibility="gone">
 
-    <!--
-        Ancho fijo en dp. En TV, 1dp ~ 1px (dpi de televisor), asi que 391dp
-        son ~391px en 1080p. Pegado al borde derecho (gravity top|end), como el
-        panel de Via cuando se abre desde el boton de la derecha de la barra.
-        No se usa 'mu' (min-units): esa unidad solo existe en codigo, aapt2 la
-        rechaza en XML ("incompatible with attribute layout_width").
-    -->
     <LinearLayout
         android:layout_width="391dp"
         android:layout_height="wrap_content"
@@ -64,7 +42,8 @@
                 style="@style/QuickMenuItem"
                 android:contentDescription="@string/btn_exit_menu"
                 android:src="@drawable/ic_menu_power"
-                android:tint="@color/qm_icon" />
+                app:tint="@color/qm_icon"
+                tools:ignore="UseAppTint" />
 
             <View
                 android:layout_width="0dp"
@@ -77,7 +56,8 @@
                 android:contentDescription="@string/dialog_cancel"
                 android:rotation="90"
                 android:src="@drawable/ic_chevron_right"
-                android:tint="@color/qm_icon" />
+                app:tint="@color/qm_icon"
+                tools:ignore="UseAppTint" />
         </LinearLayout>
 
         <!-- Separador tenue -->
@@ -172,13 +152,6 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/qmShare"
-                style="@style/QuickMenuCell">
-                <ImageView style="@style/QuickMenuIcon" android:src="@drawable/ic_menu_share" />
-                <TextView style="@style/QuickMenuLabel" android:text="@string/qm_share" />
-            </LinearLayout>
-
-            <LinearLayout
                 android:id="@+id/qmFindInPage"
                 style="@style/QuickMenuCell">
                 <ImageView style="@style/QuickMenuIcon" android:src="@drawable/ic_menu_search" />
@@ -191,6 +164,12 @@
                 <ImageView style="@style/QuickMenuIcon" android:src="@drawable/ic_menu_tabs" />
                 <TextView style="@style/QuickMenuLabel" android:text="@string/qm_tabs" />
             </LinearLayout>
+
+            <!-- Espacio vacio para mantener alineacion exacta de 4 columnas -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
         </LinearLayout>
 
     </LinearLayout>

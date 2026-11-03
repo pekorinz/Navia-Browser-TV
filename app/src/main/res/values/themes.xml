@@ -6,5 +6,22 @@
         <item name="android:windowBackground">@color/tv_bg_dark</item>
         <item name="colorPrimary">@color/tv_accent</item>
         <item name="colorAccent">@color/tv_focus_border</item>
+        <item name="alertDialogTheme">@style/CustomAlertDialogTheme</item>
+    </style>
+
+    <style name="CustomAlertDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_quick_menu</item>
+        <item name="android:textColorPrimary">@color/setup_text</item>
+        <item name="android:textColorSecondary">@color/setup_text_secondary</item>
+        <item name="colorAccent">@color/setup_accent</item>
+        <item name="android:windowMinWidthMajor">420dp</item>
+        <item name="android:windowMinWidthMinor">420dp</item>
+        <item name="android:gravity">end</item>
+        <item name="android:windowAnimationStyle">@style/RightDrawerAnimation</item>
+    </style>
+
+    <style name="RightDrawerAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_in_right</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_right</item>
     </style>
 </resources>

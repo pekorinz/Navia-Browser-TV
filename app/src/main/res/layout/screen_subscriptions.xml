@@ -94,6 +94,27 @@
 
             <View style="@style/ViaSetupDivider" />
 
+            <!-- Fila para descargar todos con un solo clic -->
+            <LinearLayout
+                android:id="@+id/rowSubsDownloadAll"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="Descargar todos los filtros" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="Descarga y actualiza automáticamente todas las listas una por una" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
             <TextView
                 style="@style/ViaSetupGroupLabel"
                 android:text="@string/setting_adblock_subscriptions" />

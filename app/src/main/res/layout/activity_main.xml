@@ -93,19 +93,15 @@
                     android:textColorHint="@color/via_text_secondary"
                     android:textSize="15sp" />
 
-                <ImageButton
-                    android:id="@+id/btnRefresh"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="@drawable/bg_via_icon_ripple"
-                    android:contentDescription="@string/btn_refresh"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_via_refresh"
-                    android:tint="@color/via_text_secondary" />
-
             </LinearLayout>
 
             <!-- Acciones -->
+            <ImageButton
+                android:id="@+id/btnRefresh"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_refresh"
+                android:src="@drawable/ic_via_refresh" />
+
             <ImageButton
                 android:id="@+id/btnHome"
                 style="@style/ViaToolbarButton"
@@ -147,20 +143,6 @@
                 style="@style/ViaToolbarButton"
                 android:contentDescription="@string/btn_menu"
                 android:src="@drawable/ic_via_menu" />
-
-            <!-- Cerrar/exportar: chevron ">" que despliega el menu secundario -->
-            <ImageButton
-                android:id="@+id/btnMore"
-                style="@style/ViaToolbarButton"
-                android:contentDescription="@string/btn_more"
-                android:src="@drawable/ic_chevron_right" />
-
-            <!-- Encendido: apaga el navegador -->
-            <ImageButton
-                android:id="@+id/btnCollapseToolbar"
-                style="@style/ViaToolbarButton"
-                android:contentDescription="@string/btn_exit_menu"
-                android:src="@drawable/ic_via_power" />
 
         </LinearLayout>
 

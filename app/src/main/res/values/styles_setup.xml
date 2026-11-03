@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-    Estilos de la pantalla de Ajustes, replicando el diseno de Via.
+    Estilos de la pantalla de Ajustes, replicando el diseño de Via.
 
     Rasgos tomados de las capturas reales de Via:
       - Fondo BLANCO, no oscuro.
       - Filas SIN icono: solo el texto a la izquierda, alineado a 16dp del borde.
       - Las filas de navegacion llevan ">" a la derecha.
       - Las filas con interruptor llevan un punto/switch a la derecha.
-      - Titulo + subtitulo gris pequeÃƒÂ±o debajo.
+      - Titulo + subtitulo gris pequeño debajo.
       - Separacion generosa entre filas (Via usa ~72dp de alto por fila).
       - Cabecera: flecha "<" + titulo en negrita, con linea separadora debajo.
 -->

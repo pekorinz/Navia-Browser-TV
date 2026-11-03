@@ -2,6 +2,7 @@ package com.pekorinz.via2.ui
 
 import android.app.DownloadManager
 import android.content.Context
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -65,6 +66,9 @@ class MainActivity : AppCompatActivity() {
     /** Pantalla de ajuste visible ahora mismo (null = ninguna). */
     private var currentSetupScreen: View? = null
 
+    /** Vista que tenia el foco antes de abrir menus o ajustes, para restaurarlo al cerrar. */
+    private var lastFocusedView: View? = null
+
     private var isDesktopMode = false
     private var isNightMode = false
     private var currentPageTitle: String = ""
@@ -108,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         ivSecurity = findViewById(R.id.ivSecurity)
         tvBlockedBadge = findViewById(R.id.tvBlockedBadge)
         quickMenu = findViewById(R.id.quickMenu)
+        updateAppThemeColors()
     }
 
     private fun setupWebView() {
@@ -130,8 +135,10 @@ class MainActivity : AppCompatActivity() {
                 showHttpWarningDialog(url, proceed)
             },
             onBlockedCountChanged = { count ->
-                preferenceManager.addBlockedCount(1L)
-                updateBlockedBadge(count)
+                runOnUiThread {
+                    preferenceManager.addBlockedCount(1L)
+                    updateBlockedBadge(count)
+                }
             }
         )
 
@@ -267,16 +274,6 @@ class MainActivity : AppCompatActivity() {
         // Sanduche: abre el menu rapido blanco estilo Via
         findViewById<ImageButton>(R.id.btnSettings).setOnClickListener {
             showQuickMenu()
-        }
-
-        // Chevron ">": menu secundario con las acciones menos usadas
-        findViewById<ImageButton>(R.id.btnMore).setOnClickListener {
-            showMoreMenu()
-        }
-
-        // Encendido: cierra el navegador (pide confirmacion)
-        findViewById<ImageButton>(R.id.btnCollapseToolbar).setOnClickListener {
-            showExitConfirmationDialog()
         }
 
         etUrl.setOnEditorActionListener { _, actionId, _ ->
@@ -670,6 +667,7 @@ class MainActivity : AppCompatActivity() {
      * layout ya corrio y requestFocus() si funciona.
      */
     private fun showQuickMenu() {
+        lastFocusedView = currentFocus
         if (!quickMenuHooked) {
             hookQuickMenu()
             quickMenuHooked = true
@@ -702,7 +700,12 @@ class MainActivity : AppCompatActivity() {
         isQuickMenuOpen = false
         quickMenu.visibility = View.GONE
         trapFocusBehindMenu(false)
-        webView.requestFocus()
+        val target = lastFocusedView ?: findViewById<View>(R.id.btnSettings)
+        if (target != null && target.isAttachedToWindow) {
+            target.requestFocus()
+        } else {
+            findViewById<View>(R.id.btnSettings)?.requestFocus()
+        }
     }
 
     /** true si el foco esta en algun boton del menu (no en la pagina de atras). */
@@ -805,10 +808,6 @@ class MainActivity : AppCompatActivity() {
             hideQuickMenu()
             showMoreMenu()
         }
-        findViewById<View>(R.id.qmShare).setOnClickListener {
-            hideQuickMenu()
-            shareCurrentPage()
-        }
         findViewById<View>(R.id.qmFindInPage).setOnClickListener {
             hideQuickMenu()
             showFindInPageDialog()
@@ -843,7 +842,7 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(R.string.qm_bookmarks)
                 .setMessage(R.string.qm_bookmarks_empty)
                 .setPositiveButton(R.string.dialog_ok, null)
-                .show()
+                .showThemed()
             return
         }
         val labels = items.map { it.second }.toTypedArray()
@@ -855,7 +854,7 @@ class MainActivity : AppCompatActivity() {
                 d.dismiss()
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     /** Historial de visitas: lista, navega y permite borrarlo. */
@@ -866,7 +865,7 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(R.string.qm_history)
                 .setMessage(R.string.qm_history_empty)
                 .setPositiveButton(R.string.dialog_ok, null)
-                .show()
+                .showThemed()
             return
         }
         val labels = items.map { it.second }.toTypedArray()
@@ -882,7 +881,7 @@ class MainActivity : AppCompatActivity() {
                 toast(R.string.qm_history_cleared)
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     private fun openDownloadsFolder() {
@@ -912,6 +911,100 @@ class MainActivity : AppCompatActivity() {
     private fun applyNightMode() {
         val js = if (isNightMode) NIGHT_MODE_JS else NIGHT_MODE_OFF_JS
         webView.evaluateJavascript(js, null)
+        updateAppThemeColors()
+    }
+
+    private fun updateAppThemeColors() {
+        val screenBg = if (isNightMode) Color.parseColor("#0F172A") else Color.WHITE
+        val qmCardBg = if (isNightMode) Color.parseColor("#1E293B") else Color.WHITE
+        val qmTextColor = if (isNightMode) Color.parseColor("#F8FAFC") else Color.parseColor("#3C3C3C")
+        val qmIconColor = if (isNightMode) Color.parseColor("#F8FAFC") else Color.parseColor("#1C1B1D")
+
+        // 1. Setup / Settings screens background and text updates
+        for (v in setupScreens()) {
+            v.setBackgroundColor(screenBg)
+            updateTextViewsRecursive(v, isNightMode)
+        }
+
+        for (screenId in listOf(R.id.adBlockScreen, R.id.subscriptionsScreen, R.id.dnsScreen, R.id.navigationScreen, R.id.appearanceScreen, R.id.advancedScreen, R.id.aboutScreen)) {
+            findViewById<View>(screenId)?.let {
+                it.setBackgroundColor(screenBg)
+                updateTextViewsRecursive(it, isNightMode)
+            }
+        }
+
+        // 2. Quick Menu card background tint and items
+        val qmCardContainer = (quickMenu as? ViewGroup)?.getChildAt(0)
+        qmCardContainer?.background?.setTint(qmCardBg)
+
+        for (id in TOP_IDS + GRID_IDS) {
+            val cell = findViewById<View>(id) ?: continue
+            if (cell is ViewGroup) {
+                for (i in 0 until cell.childCount) {
+                    when (val child = cell.getChildAt(i)) {
+                        is ImageView -> child.setColorFilter(qmIconColor)
+                        is TextView -> child.setTextColor(qmTextColor)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateTextViewsRecursive(view: View, isNight: Boolean) {
+        val textColor = if (isNight) Color.parseColor("#F8FAFC") else Color.parseColor("#DE000000")
+        val textSecColor = if (isNight) Color.parseColor("#94A3B8") else Color.parseColor("#8A000000")
+
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                updateTextViewsRecursive(view.getChildAt(i), isNight)
+            }
+        } else if (view is TextView) {
+            if (view.textSize > 15f || view.id == R.id.tvHeaderTitle) {
+                view.setTextColor(textColor)
+            } else {
+                view.setTextColor(textSecColor)
+            }
+        }
+    }
+
+    private fun AlertDialog.Builder.showThemed(): AlertDialog {
+        val dialog = this.create()
+        val isNight = isNightMode
+        val bgColor = if (isNight) Color.parseColor("#1E293B") else Color.WHITE
+
+        dialog.window?.let { w ->
+            w.setGravity(android.view.Gravity.END or android.view.Gravity.FILL_VERTICAL)
+            w.setLayout(
+                (420 * resources.displayMetrics.density).toInt(),
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            w.setWindowAnimations(R.style.RightDrawerAnimation)
+            w.setBackgroundDrawable(android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                cornerRadius = 20f * resources.displayMetrics.density
+                setColor(bgColor)
+            })
+        }
+
+        dialog.setOnShowListener {
+            applyThemeToDialogView(dialog.window!!.decorView, isNight)
+        }
+
+        dialog.show()
+        return dialog
+    }
+
+    private fun applyThemeToDialogView(view: View, isNight: Boolean) {
+        val textColor = if (isNight) Color.parseColor("#F8FAFC") else Color.parseColor("#1C1B1D")
+        val textSecColor = if (isNight) Color.parseColor("#94A3B8") else Color.parseColor("#616161")
+
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                applyThemeToDialogView(view.getChildAt(i), isNight)
+            }
+        } else if (view is TextView) {
+            view.setTextColor(textColor)
+        }
     }
 
     /**
@@ -961,7 +1054,7 @@ class MainActivity : AppCompatActivity() {
                 webView.clearMatches()
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     /** Alterna el User-Agent entre movil y escritorio y recarga. */    private fun toggleDesktopMode() {
@@ -1023,7 +1116,7 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton(R.string.btn_exit_menu) { _, _ ->
                 showExitConfirmationDialog()
             }
-            .show()
+            .showThemed()
     }
 
     private fun showTabsDialog() {
@@ -1042,7 +1135,7 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     private fun showDownloadConfirmationDialog(url: String, mimeType: String?) {
@@ -1063,7 +1156,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.dialog_no, null)
-            .show()
+            .showThemed()
     }
 
     private fun showHttpWarningDialog(url: String, onProceed: () -> Unit) {
@@ -1072,7 +1165,7 @@ class MainActivity : AppCompatActivity() {
             .setMessage(R.string.http_warning_message)
             .setPositiveButton(R.string.dialog_yes) { _, _ -> onProceed() }
             .setNegativeButton(R.string.dialog_no, null)
-            .show()
+            .showThemed()
     }
 
     private fun showExitConfirmationDialog() {
@@ -1081,10 +1174,11 @@ class MainActivity : AppCompatActivity() {
             .setMessage(R.string.exit_dialog_message)
             .setPositiveButton(R.string.dialog_yes) { _, _ -> finish() }
             .setNegativeButton(R.string.dialog_no, null)
-            .show()
+            .showThemed()
     }
 
     private fun showSettingsScreen() {
+        lastFocusedView = currentFocus
         showSetup(null, R.id.rowMenuGeneral)
     }
 
@@ -1141,9 +1235,13 @@ class MainActivity : AppCompatActivity() {
         for (v in setupScreens()) v.visibility = View.GONE
         settingsScreen.visibility = View.GONE
         currentSetupScreen = null
-        // Se devuelve el foco a la pagina al salir de ajustes
         setFocusableBehindSetup(false)
-        findViewById<ImageButton>(R.id.btnSettings).requestFocus()
+        val target = lastFocusedView ?: findViewById<View>(R.id.btnSettings)
+        if (target != null && target.isAttachedToWindow) {
+            target.requestFocus()
+        } else {
+            findViewById<View>(R.id.btnSettings)?.requestFocus()
+        }
     }
 
     /** true si hay alguna pantalla de ajuste abierta. */
@@ -1223,7 +1321,7 @@ class MainActivity : AppCompatActivity() {
     /** Primer intento: la primera fila; si no se deja, la cabecera de volver. */
     private fun focusFirstSettingRow(): Boolean {
         findViewById<View>(R.id.rowMenuGeneral)?.let { if (it.requestFocus()) return true }
-        return findViewById<View>(R.id.btnSettingsBack)?.requestFocus() ?: false
+        return findViewById<View>(R.id.settingsHeader)?.findViewById<View>(R.id.btnHeaderBack)?.requestFocus() ?: false
     }
 
     /**
@@ -1237,7 +1335,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSettingsActions() {
         // ---------------------------------------------- raiz: secciones
-        findViewById<View>(R.id.btnSettingsBack).setOnClickListener {
+        findViewById<View>(R.id.settingsHeader).findViewById<View>(R.id.btnHeaderBack).setOnClickListener {
             showBrowserScreen()
         }
 
@@ -1261,7 +1359,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // ---------------------------------------- bloqueo de anuncios
-        findViewById<View>(R.id.btnAdBlockBack).setOnClickListener {
+        findViewById<View>(R.id.adBlockHeader).findViewById<View>(R.id.btnHeaderBack).setOnClickListener {
             showSetup(null, R.id.rowMenuPrivacy)
         }
 
@@ -1321,6 +1419,10 @@ class MainActivity : AppCompatActivity() {
             downloadAllSubscriptions()
         }
 
+        findViewById<View>(R.id.rowSubsDownloadAll).setOnClickListener {
+            downloadAllSubscriptions()
+        }
+
         findViewById<View>(R.id.rowSubsInterval).setOnClickListener {
             showSubsIntervalDialog()
         }
@@ -1357,7 +1459,7 @@ class MainActivity : AppCompatActivity() {
                 toast(R.string.settings_saved)
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     private fun showAppearanceDialog() {
@@ -1377,7 +1479,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     private fun showAdvancedDialog() {
@@ -1400,7 +1502,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     private fun showAboutDialog() {
@@ -1415,7 +1517,7 @@ class MainActivity : AppCompatActivity() {
             .setTitle(R.string.settings_section_about)
             .setMessage(msg)
             .setPositiveButton(R.string.dialog_ok, null)
-            .show()
+            .showThemed()
     }
 
     // ==================================================================
@@ -1540,17 +1642,18 @@ class MainActivity : AppCompatActivity() {
         }.apply { isDaemon = true; name = "via2-subs" }.start()
     }
 
-    /** Descarga todas las listas del catalogo (boton ACTUALIZAR). */
+    /** Descarga todas las listas del catalogo de forma progresiva (uno por uno). */
     private fun downloadAllSubscriptions() {
         val all = adBlockerManager.subscriptions.catalog
-        Toast.makeText(
-            this, getString(R.string.subs_downloading, all.size), Toast.LENGTH_SHORT
-        ).show()
+        toastMsg(getString(R.string.subs_downloading, all.size))
         Thread {
             var ok = 0
             var fail = 0
             var rules = 0
-            for (f in all) {
+            for ((index, f) in all.withIndex()) {
+                runOnUiThread {
+                    toastMsg("(${index + 1}/${all.size}) Descargando: ${f.name}...")
+                }
                 val r = adBlockerManager.subscriptions.download(f)
                 if (r.ok) {
                     ok++
@@ -1558,7 +1661,10 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     fail++
                 }
-                runOnUiThread { refreshSubscriptionsList() }
+                // Refresco en tiempo real tras la descarga individual de cada filtro
+                runOnUiThread {
+                    refreshSubscriptionsList()
+                }
             }
             preferenceManager.setSubsLastUpdate(System.currentTimeMillis())
             runOnUiThread {
@@ -1597,7 +1703,7 @@ class MainActivity : AppCompatActivity() {
                 d.dismiss()
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     private fun toastMsg(msg: String) {
@@ -1616,7 +1722,7 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(R.string.setting_dns_test)
                 .setMessage(R.string.setting_dns_test_no_doh)
                 .setPositiveButton(R.string.dialog_ok, null)
-                .show()
+                .showThemed()
             return
         }
         val host = "example.com"
@@ -1644,7 +1750,7 @@ class MainActivity : AppCompatActivity() {
                     .setTitle(R.string.setting_dns_test)
                     .setMessage(mensaje)
                     .setPositiveButton(R.string.dialog_ok, null)
-                    .show()
+                    .showThemed()
                 updateSettingsScreen()
             }
         }
@@ -1676,7 +1782,7 @@ class MainActivity : AppCompatActivity() {
                 toast(R.string.setting_dns_custom_saved)
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     private fun showDnsSelectionDialog() {
@@ -1701,7 +1807,7 @@ class MainActivity : AppCompatActivity() {
                 dialog.dismiss()
             }
             .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
+            .showThemed()
     }
 
     companion object {
@@ -1711,11 +1817,11 @@ class MainActivity : AppCompatActivity() {
         /** Barra superior del menu (encendido, cerrar), en orden de layout. */
         private val TOP_IDS = arrayOf(R.id.qmPower, R.id.qmClose)
 
-        /** Los 12 iconos de la rejilla, en orden de lectura (izq->der, arriba->abajo). */
+        /** Los iconos de la rejilla, en orden de lectura (izq->der, arriba->abajo). */
         private val GRID_IDS = arrayOf(
             R.id.qmNight, R.id.qmBookmarks, R.id.qmHistory, R.id.qmDownloads,
             R.id.qmIncognito, R.id.qmAddBookmark, R.id.qmDesktop, R.id.qmTools,
-            R.id.qmSettings, R.id.qmShare, R.id.qmFindInPage, R.id.qmTabs
+            R.id.qmSettings, R.id.qmFindInPage, R.id.qmTabs
         )
 
         /**

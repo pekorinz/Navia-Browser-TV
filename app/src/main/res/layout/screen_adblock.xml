@@ -167,7 +167,9 @@
             <View style="@style/ViaSetupDivider" />
 
             <!-- Contador de bloqueos con boton de reinicio a la derecha -->
-            <LinearLayout style="@style/ViaSetupNavRow">
+            <LinearLayout
+                android:id="@+id/rowSettingBlockedStats"
+                style="@style/ViaSetupNavRow">
 
                 <LinearLayout style="@style/ViaSetupRowText">
 
