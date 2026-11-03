@@ -1,0 +1,233 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Navegador TV</string>
+    <string name="url_hint">Escribe una direcciÃ³n URL o bÃºsqueda&#8230;</string>
+    <string name="btn_back">AtrÃ¡s</string>
+    <string name="btn_forward">Adelante</string>
+    <string name="btn_home">Inicio</string>
+    <string name="btn_refresh">Recargar</string>
+    <string name="btn_mode_switch">Modo D-Pad</string>
+    <string name="btn_adblock">Bloqueador</string>
+    <string name="btn_tabs">PestaÃ±as</string>
+    <string name="btn_menu">Ajustes</string>
+    <string name="btn_center_cursor">Centrar Cursor</string>
+    <string name="btn_exit_menu">Salir</string>
+    <string name="settings_back">â† Navegador</string>
+    <string name="tabs_title">Gestor de PestaÃ±as</string>
+    <string name="new_tab">Nueva PestaÃ±a</string>
+
+    <!-- D-Pad Modes -->
+    <string name="mode_cursor">Modo Cursor</string>
+    <string name="mode_scroll">Modo Desplazamiento</string>
+    <string name="mode_focus">Modo Foco</string>
+    <string name="mode_changed_format">Modo cambiado a: %1$s</string>
+
+    <!-- Dialogs and Notices -->
+    <string name="exit_dialog_title">Salir de Navegador TV</string>
+    <string name="exit_dialog_message">Â¿Deseas cerrar la aplicaciÃ³n?</string>
+    <string name="dialog_yes">SÃ­</string>
+    <string name="dialog_no">No</string>
+    <string name="dialog_ok">Aceptar</string>
+    <string name="dialog_cancel">Cancelar</string>
+
+    <string name="http_warning_title">ConexiÃ³n No Segura (HTTP)</string>
+    <string name="http_warning_message">Este sitio web no utiliza HTTPS. Â¿Deseas continuar bajo tu propio riesgo?</string>
+
+    <string name="settings_title">Ajustes del Navegador</string>
+    <string name="settings_subtitle">Personaliza la navegaciÃ³n para tu control remoto.</string>
+    <string name="settings_section_navigation">NAVEGACIÃ“N</string>
+    <string name="settings_section_privacy">PRIVACIDAD Y SITIOS</string>
+    <string name="settings_section_dns">DNS DEL NAVEGADOR</string>
+    <string name="settings_footer">Los ajustes se guardan en este dispositivo.</string>
+    <string name="settings_action">Ejecutar</string>
+    <string name="setting_cursor_speed">Velocidad del Cursor</string>
+    <string name="setting_cursor_speed_summary">Cambia la rapidez del puntero con cada pulsaciÃ³n.</string>
+    <string name="setting_adblock_global">Bloqueador de Publicidad Global</string>
+    <string name="setting_adblock_global_summary">Activar o pausar el bloqueo en todos los sitios.</string>
+    <string name="setting_adblock_current_site">Bloqueo en este sitio</string>
+    <string name="setting_adblock_current_site_summary">Permite o bloquea publicidad solo en el sitio actual.</string>
+    <string name="setting_adblock_site_no_page">Abre un sitio para cambiar esta opciÃ³n.</string>
+    <string name="setting_adblock_site_allowed">Anuncios permitidos</string>
+    <string name="setting_adblock_site_blocked">Anuncios bloqueados</string>
+    <string name="setting_default_mode">Modo D-Pad Predeterminado</string>
+    <string name="setting_default_mode_summary">Modo que se activa al iniciar el navegador.</string>
+    <string name="setting_center_cursor_summary">Devuelve el puntero al centro de la pantalla.</string>
+    <string name="speed_slow">Lenta</string>
+    <string name="speed_medium">Media</string>
+    <string name="speed_fast">RÃ¡pida</string>
+
+    <string name="adblock_active">AdBlock Activado</string>
+    <string name="adblock_disabled">AdBlock Desactivado</string>
+
+    <string name="error_loading_page">Error al cargar la pÃ¡gina</string>
+    <string name="test_local_page">PÃ¡gina de Prueba Local</string>
+
+    <!-- DNS -->
+    <string name="setting_dns">Servidor DNS</string>
+    <string name="setting_dns_summary">Elige con quÃ© DNS resuelve el navegador. Solo afecta a las pÃ¡ginas que abres aquÃ­, no al resto de la TV.</string>
+    <string name="setting_dns_custom">URL DoH personalizada</string>
+    <string name="setting_dns_custom_summary">DirecciÃ³n completa del servidor DNS-over-HTTPS (debe empezar por https://).</string>
+    <string name="setting_dns_status">Estado del DNS</string>
+    <string name="setting_dns_status_summary">Consultas realizadas, memoria cachÃ© y Ãºltimo error.</string>
+    <string name="setting_dns_clear_cache">Vaciar cachÃ© DNS</string>
+    <string name="setting_dns_clear_cache_summary">Olvida las direcciones ya resueltas y vuelve a preguntar.</string>
+    <string name="setting_dns_test">Probar el DNS</string>
+    <string name="setting_dns_test_summary">Resuelve un dominio de prueba con el servidor elegido.</string>
+    <string name="setting_blocked_stats">Solicitudes bloqueadas</string>
+    <string name="setting_blocked_stats_summary">Total de anuncios y rastreadores detenidos hasta ahora.</string>
+    <string name="setting_blocked_reset">Reiniciar contador de bloqueos</string>
+    <string name="setting_blocked_reset_summary">Vuelve el contador acumulado a cero.</string>
+    <string name="dns_dialog_title">Elegir servidor DNS</string>
+    <string name="dns_custom_dialog_title">URL DoH personalizada</string>
+    <string name="dns_custom_dialog_hint">https://ejemplo.com/dns-query</string>
+    <string name="dns_custom_invalid">La URL debe empezar por https://</string>
+    <string name="dns_applied">DNS aplicado: %1$s</string>
+    <string name="dns_disabled">DNS del sistema activo</string>
+    <string name="dns_cache_cleared">CachÃ© DNS vaciada</string>
+    <string name="dns_test_running">Consultandoâ€¦</string>
+    <string name="dns_test_ok">Correcto: %1$s â†’ %2$s</string>
+    <string name="dns_test_fail">Sin respuesta de %1$s</string>
+    <string name="blocked_counter_title">ProtecciÃ³n activa</string>
+    <string name="blocked_counter_format">%1$d bloqueados en esta pÃ¡gina</string>
+    <string name="blocked_total_format">%1$d bloqueados en total</string>
+    <string name="dns_blocked_page_title">Dominio bloqueado por el DNS</string>
+    <string name="dns_blocked_page_message">El servidor DNS que elegiste no resuelve %1$s. Si crees que es un error, cambia de DNS o permÃ­telo para este sitio.</string>
+    <string name="btn_collapse_toolbar">Ocultar barra</string>
+    <string name="btn_more">MÃ¡s opciones</string>
+    <string name="mode_dialog_title">Modo de navegaciÃ³n</string>
+
+    <!-- Menu rapido -->
+    <string name="qm_night">Modo nocturno</string>
+    <string name="qm_bookmarks">Marcadores</string>
+    <string name="qm_history">Historial</string>
+    <string name="qm_downloads">Descargas</string>
+    <string name="qm_incognito">Modo incÃ³gnito</string>
+    <string name="qm_add_bookmark">AÃ±adir marcador</string>
+    <string name="qm_desktop">Sitio de escritorio</string>
+    <string name="qm_tools">Herramientas</string>
+    <string name="qm_settings">Ajustes</string>
+    <string name="qm_share">Compartir</string>
+    <string name="qm_find">Buscar en pÃ¡gina</string>
+    <string name="qm_tabs">PestaÃ±as</string>
+    <string name="qm_bookmark_added">Marcador aÃ±adido</string>
+    <string name="qm_bookmark_exists">Ya estÃ¡ en marcadores</string>
+    <string name="qm_desktop_on">Modo escritorio activado</string>
+    <string name="qm_desktop_off">Modo escritorio desactivado</string>
+    <string name="qm_nothing_to_share">No hay pÃ¡gina para compartir</string>
+    <string name="qm_feature_soon">PrÃ³ximamente</string>
+    <string name="qm_bookmarks_empty">TodavÃ­a no has guardado marcadores.</string>
+    <string name="qm_history_empty">El historial estÃ¡ vacÃ­o.</string>
+    <string name="qm_history_clear">Borrar historial</string>
+    <string name="qm_history_cleared">Historial borrado</string>
+    <string name="qm_night_on">Modo nocturno activado</string>
+    <string name="qm_night_off">Modo nocturno desactivado</string>
+    <string name="qm_incognito_on">Modo incÃ³gnito activado</string>
+    <string name="qm_incognito_off">Modo incÃ³gnito desactivado</string>
+    <string name="qm_find_hint">Texto a buscar</string>
+    <string name="qm_find_next">Buscar</string>
+    <string name="qm_find_clear">Quitar resaltado</string>
+    <string name="qm_find_started">Buscando en la pÃ¡ginaâ€¦</string>
+    <string name="qm_no_downloads_app">Esta TV no tiene app de descargas</string>
+    <string name="qm_url_copied">Enlace copiado al portapapeles</string>
+    <string name="ua_desktop">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36</string>
+    <string name="btn_secure">ConexiÃ³n segura</string>
+    <string name="btn_insecure">ConexiÃ³n no cifrada</string>
+
+    <!-- ===== Valores y avisos de la pantalla de ajustes ===== -->
+    <string name="setting_dns_status_system">DNS del sistema</string>
+    <string name="setting_dns_status_inactive">Sin activar</string>
+    <string name="setting_dns_status_format">%1$d consultas Â· %2$d en cachÃ©</string>
+    <string name="setting_dns_custom_none">Sin configurar</string>
+    <string name="setting_dns_custom_hint">https://servidor/dns-query</string>
+    <string name="setting_dns_custom_saved">URL DoH guardada</string>
+    <string name="setting_blocked_stats_value_format">%1$d bloqueadas</string>
+    <string name="setting_dns_test_no_doh">El DNS propio no estÃ¡ activo.\n\nElige un proveedor distinto de "DNS del sistema" para poder probarlo.</string>
+    <string name="setting_dns_test_running">Probando el DNSâ€¦</string>
+    <string name="setting_dns_test_no_response">sin respuesta</string>
+    <string name="setting_dns_test_ok_format">Correcto.\n\n%1$s resolviÃ³ a %2$s en %3$d ms.</string>
+    <string name="setting_dns_test_fail_format">FallÃ³.\n\nNo se pudo resolver %1$s en %2$d ms.\nMotivo: %3$s</string>
+
+    <!-- ===== Secciones de Ajustes (diseÃ±o Via) ===== -->
+    <string name="settings_section_navigation_summary">Velocidad del cursor y modo del D-pad</string>
+    <string name="settings_section_appearance">PersonalizaciÃ³n</string>
+    <string name="settings_section_appearance_summary">Modo nocturno, sitio de escritorio y modo de lectura</string>
+    <string name="settings_section_privacy_summary">Bloqueo de anuncios, filtros y datos</string>
+    <string name="settings_section_dns_summary">Elige con quÃ© DNS resuelve el navegador</string>
+    <string name="settings_section_advanced">Avanzado</string>
+    <string name="settings_section_advanced_summary">Centrar cursor, cachÃ© y datos de navegaciÃ³n</string>
+    <string name="settings_section_about">Acerca de</string>
+    <string name="settings_section_about_summary">VersiÃ³n, reglas cargadas y estadÃ­sticas</string>
+
+    <!-- ===== Bloqueo de anuncios ===== -->
+    <string name="setting_adblock_builtin">Activar filtros integrados</string>
+    <string name="setting_adblock_builtin_summary">Los filtros integrados solo bloquean anuncios comunes</string>
+    <string name="setting_adblock_custom">Filtros personalizados</string>
+    <string name="setting_adblock_custom_summary">Incluyendo filtros personalizados y anuncios marcados</string>
+    <string name="setting_adblock_subscriptions">Suscripciones de filtros</string>
+    <string name="setting_adblock_subscriptions_summary">SuscrÃ­bete a las listas de filtros de Adblock Plus</string>
+    <string name="setting_adblock_master_summary_on">Activado: %1$d anuncios bloqueados</string>
+    <string name="setting_adblock_master_summary_off">Desactivado</string>
+    <string name="setting_adblock_custom_summary_active">%1$d listas Â· %2$d filtros</string>
+    <string name="setting_adblock_custom_summary_none">Ninguna lista descargada</string>
+
+    <!-- ===== Suscripciones de filtros ===== -->
+    <string name="subs_update">Actualizar</string>
+    <string name="subs_interval">Intervalo de actualizaciÃ³n</string>
+    <string name="subs_interval_never">Nunca</string>
+    <string name="subs_interval_days">Cada %1$d dÃ­as</string>
+    <string name="subs_empty">No hay listas descargadas. Pulsa ACTUALIZAR para bajarlas.</string>
+    <string name="subs_count_format">%1$d filtros</string>
+    <string name="subs_updated_format">%1$d filtros, actualizado %2$s</string>
+    <string name="subs_not_downloaded">Sin descargar</string>
+    <string name="subs_downloading">Descargando %1$d listasâ€¦</string>
+    <string name="subs_download_done">%1$d listas actualizadas Â· %2$d filtros</string>
+    <string name="subs_download_failed">FallÃ³ la descarga: %1$s</string>
+    <string name="subs_download_partial">%1$d actualizadas, %2$d fallidas</string>
+
+    <!-- ===== DiÃ¡logos de secciones ===== -->
+    <string name="general_dialog_format">Velocidad del cursor: %1$s\nModo del D-pad: %2$s</string>
+    <string name="settings_saved">Ajuste guardado</string>
+    <string name="about_dialog_format">Via2 para Android TV\n\nReglas cargadas: %1$s\nFiltros suscritos: %2$d\nAnuncios bloqueados: %3$d\n\nBasado en la interfaz de Via Browser.</string>
+
+    <!-- ===== Resumenes que se rellenan en tiempo real en la raiz ===== -->
+    <string name="summary_navigation_format">Cursor %1$s Â· D-pad %2$s</string>
+    <string name="summary_appearance_format">Nocturno %1$s Â· Escritorio %2$s</string>
+    <string name="summary_privacy_format">%1$s Â· %2$d bloqueados</string>
+    <string name="summary_about_format">VersiÃ³n %1$s</string>
+    <string name="summary_on">activado</string>
+    <string name="summary_off">desactivado</string>
+    <string name="summary_bloqueo">Bloqueo activo</string>
+    <string name="summary_bloqueo_off">Bloqueo pausado</string>
+    <string name="summary_subscriptions_format">%1$d listas</string>
+    <string name="summary_builtin_format">%1$d reglas</string>
+
+    <!-- ===== Pantalla: NavegaciÃ³n ===== -->
+    <string name="setting_cursor_speed_slow">Lenta</string>
+    <string name="setting_cursor_speed_medium">Media</string>
+    <string name="setting_cursor_speed_fast">RÃ¡pida</string>
+    <string name="setting_dpad_mode">Modo del D-pad</string>
+    <string name="setting_center_cursor">Centrar el cursor</string>
+
+    <!-- ===== Pantalla: Apariencia ===== -->
+    <string name="setting_night_mode">Modo nocturno</string>
+    <string name="setting_night_mode_summary">Oscurece la pÃ¡gina: texto claro sobre fondo negro.</string>
+    <string name="setting_desktop_mode">Sitio de escritorio</string>
+    <string name="setting_desktop_mode_summary">Pide la versiÃ³n de escritorio en vez de la mÃ³vil.</string>
+    <string name="setting_incognito">Modo incÃ³gnito</string>
+    <string name="setting_incognito_summary">No guarda historial y borra cookies al activarlo.</string>
+
+    <!-- ===== Pantalla: Avanzado ===== -->
+    <string name="setting_clear_history">Borrar historial</string>
+    <string name="setting_clear_history_summary">Elimina las visitas guardadas en este navegador.</string>
+    <string name="setting_clear_cookies">Borrar cookies y cachÃ©</string>
+    <string name="setting_clear_cookies_summary">Cierra las sesiones y vacÃ­a los archivos temporales.</string>
+    <string name="setting_data_cleared">Datos de navegaciÃ³n borrados</string>
+
+    <!-- ===== Pantalla: Acerca de ===== -->
+    <string name="about_app_name">Via2 para Android TV</string>
+    <string name="about_version">VersiÃ³n %1$s</string>
+    <string name="about_rules">Reglas cargadas</string>
+    <string name="about_subs">Filtros suscritos</string>
+    <string name="about_blocked">Anuncios bloqueados</string>
+    <string name="about_dns">DNS activo</string>
+</resources>

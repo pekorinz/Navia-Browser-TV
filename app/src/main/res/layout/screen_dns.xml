@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ajustes > DNS del navegador.
+
+      <  DNS del navegador
+      
+      Servidor DNS                Cloudflare 1.1.1.1 >
+      URL DoH personalizada                  Sin configurar >
+      Estado del DNS                                      >
+      Vaciar cache DNS                                    >
+      Probar el DNS                                       >
+
+    Esto es lo que Via no tiene: el navegador resuelve por su cuenta con
+    DNS-over-HTTPS y solo las paginas que se abren aqui; el DNS de la TV no
+    se toca.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/dnsScreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setup_bg"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <include
+        android:id="@+id/dnsHeader"
+        layout="@layout/include_setup_header" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/setup_divider" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- Proveedor -->
+            <LinearLayout
+                android:id="@+id/rowDnsProvider"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_dns" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_dns_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvDnsProviderValue"
+                    style="@style/ViaSetupRowValue" />
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- URL propia -->
+            <LinearLayout
+                android:id="@+id/rowDnsCustom"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_dns_custom" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_dns_custom_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvDnsCustomValue"
+                    style="@style/ViaSetupRowValue" />
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Estado: no navega, solo informa -->
+            <LinearLayout
+                style="@style/ViaSetupNavRow"
+                android:clickable="false"
+                android:focusable="false">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_dns_status" />
+
+                    <TextView
+                        android:id="@+id/tvDnsStatusValue"
+                        style="@style/ViaSetupRowSummary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Vaciar cache -->
+            <LinearLayout
+                android:id="@+id/rowDnsClearCache"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_dns_clear_cache" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_dns_clear_cache_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvDnsCacheValue"
+                    style="@style/ViaSetupRowValue" />
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Probar -->
+            <LinearLayout
+                android:id="@+id/rowDnsTest"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_dns_test" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_dns_test_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

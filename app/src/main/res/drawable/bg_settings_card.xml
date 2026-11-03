@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Tarjeta que agrupa varias filas de ajustes.
+
+    Antes cada fila era su propia tarjeta redondeada con margen; ahora las
+    filas van pegadas dentro de esta y las separa un divisor fino, como en
+    el panel de ajustes de Via.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="12dp" />
+    <solid android:color="@color/via_surface" />
+</shape>

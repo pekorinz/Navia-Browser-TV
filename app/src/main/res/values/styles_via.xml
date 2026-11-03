@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        Boton de icono de la barra superior.
+        Medidas exactas de Via (layout b.xml): 48dp, icono con 12dp de padding.
+        En TV se mantienen 48dp (el D-pad ya tiene su propio cursor),
+    -->
+    <style name="ViaToolbarButton">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:layout_marginStart">1dp</item>
+        <item name="android:layout_marginEnd">1dp</item>
+        <item name="android:background">@drawable/bg_via_toolbar_button</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/via_text_primary</item>
+    </style>
+
+    <!-- ================= PANTALLA DE AJUSTES ================= -->
+
+    <!--
+        Fila de ajustes, estilo Via.
+
+        ANTES tenia layout_height="76dp" fijo y layout_marginBottom=8dp, o sea
+        cada fila era su propia tarjeta flotante. Dos problemas:
+          - 76dp no da para titulo + subtitulo + padding: el texto se cortaba.
+          - Con margen entre filas no se puede agrupar nada en una tarjeta.
+        Ahora crece lo que pida el contenido (minHeight solo como suelo) y las
+        filas se apilan dentro de bg_settings_card, separadas por un divisor.
+    -->
+    <style name="ViaSettingRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">64dp</item>
+        <item name="android:background">@drawable/bg_settings_row</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingEnd">18dp</item>
+        <item name="android:paddingBottom">14dp</item>
+    </style>
+
+    <!-- Boton de volver de la cabecera (cuadrado, como el resto de la barra) -->
+    <style name="ViaSettingBackButton">
+        <item name="android:layout_width">46dp</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:background">@drawable/bg_via_toolbar_button</item>
+        <item name="android:contentDescription">@string/settings_back</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/via_text_primary</item>
+    </style>
+
+    <!-- Titulo de seccion: "NAVEGACION", "PRIVACIDAD Y SITIOS", "DNS" -->
+    <style name="ViaSettingSection">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:layout_marginBottom">10dp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">@color/via_accent</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Icono de la izquierda de cada fila -->
+    <style name="ViaSettingRowIcon">
+        <item name="android:layout_width">22dp</item>
+        <item name="android:layout_height">22dp</item>
+        <item name="android:layout_marginEnd">16dp</item>
+        <item name="android:contentDescription">@null</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/via_text_secondary</item>
+    </style>
+
+    <!-- Columna de texto: titulo encima, resumen debajo -->
+    <style name="ViaSettingRowText">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="ViaSettingRowTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/via_text_primary</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="ViaSettingRowSummary">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:textColor">@color/via_text_secondary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <!-- Valor del ajuste, a la derecha: gris, no rojo (el rojo es del foco) -->
+    <style name="ViaSettingRowValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:ellipsize">middle</item>
+        <item name="android:maxWidth">300dp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textColor">@color/via_text_secondary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <!-- Boton pequeño "Restablecer" dentro de una fila -->
+    <style name="ViaSettingResetChip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_pill_button</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textColor">@color/via_text_primary</item>
+        <item name="android:textSize">13sp</item>
+    </style>
+
+    <!-- Linea fina entre filas de la misma tarjeta -->
+    <style name="ViaSettingRowDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginStart">56dp</item>
+        <item name="android:layout_marginEnd">18dp</item>
+        <item name="android:background">@color/via_divider</item>
+    </style>
+
+    <!-- ================= MENU RAPIDO (estilo Via blanco) ================= -->
+
+    <!-- Boton de icono suelto dentro del menu blanco -->
+    <style name="QuickMenuItem">
+        <item name="android:layout_width">46dp</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:background">@drawable/bg_quick_item</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <!-- Celda de la rejilla: icono arriba, etiqueta debajo (compacta) -->
+    <style name="QuickMenuCell">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">2dp</item>
+        <item name="android:layout_marginEnd">2dp</item>
+        <item name="android:layout_marginBottom">2dp</item>
+        <item name="android:background">@drawable/bg_quick_item</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:focusableInTouchMode">false</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingTop">5dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
+    <style name="QuickMenuIcon">
+        <item name="android:layout_width">25dp</item>
+        <item name="android:layout_height">25dp</item>
+        <item name="android:contentDescription">@null</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:tint">@color/qm_icon</item>
+    </style>
+
+    <style name="QuickMenuLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">5dp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">2dp</item>
+        <item name="android:paddingEnd">2dp</item>
+        <item name="android:textColor">@color/qm_text</item>
+        <item name="android:textSize">11sp</item>
+    </style>
+
+</resources>

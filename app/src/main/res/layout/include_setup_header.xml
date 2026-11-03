@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Cabecera comun de las pantallas de Ajustes: "<" + titulo + [acciones].
+
+    Sobre fondo blanco. La flecha "<" y las acciones son enfocables para que
+    el mando pueda llegar a ellas; el titulo no.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/setup_bg"
+    android:gravity="center_vertical"
+    android:minHeight="64dp"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="12dp">
+
+    <ImageButton
+        android:id="@+id/btnHeaderBack"
+        style="@style/ViaSetupBack"
+        android:src="@drawable/ic_chevron_left" />
+
+    <TextView
+        android:id="@+id/tvHeaderTitle"
+        style="@style/ViaSetupTitle"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:singleLine="true" />
+
+    <!-- Acciones opcionales (boton +, ACTUALIZAR...). Se pueden ocultar -->
+    <LinearLayout
+        android:id="@+id/headerActions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal" />
+
+</LinearLayout>

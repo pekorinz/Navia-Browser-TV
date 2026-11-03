@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Fondo de una fila de ajustes.
+
+    En reposo es TRANSPARENTE: el color lo pone la tarjeta que la contiene
+    (bg_settings_card). Antes pintaba un solido propio con esquinas redondeadas,
+    que dentro de una tarjeta se veia como una caja dentro de otra.
+
+    Al enfocar (D-pad) se pinta con el color de acento tenue y un contorno
+    de 2dp, esquinas rectas: la fila resalta como una sola pieza de la tarjeta.
+-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/via_focus_bg" />
+            <stroke
+                android:width="2dp"
+                android:color="@color/via_accent" />
+        </shape>
+    </item>
+
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/via_focus_bg" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+
+</selector>

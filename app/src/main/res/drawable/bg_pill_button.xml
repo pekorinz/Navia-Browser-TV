@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Focused state for D-Pad navigation -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#3F3F46" />
+            <stroke android:width="3dp" android:color="@color/tv_focus_border" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <!-- Normal state -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#222225" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+</selector>

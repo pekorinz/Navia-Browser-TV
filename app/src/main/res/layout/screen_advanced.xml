@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ajustes > Avanzado.
+
+      <  Avanzado
+      
+      Centrar el cursor                      >
+      Vaciar cache DNS             1.234 consultas >
+      Probar el DNS                          >
+      Borrar historial                       >
+      Borrar cookies y cache                 >
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/advancedScreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setup_bg"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <include
+        android:id="@+id/advancedHeader"
+        layout="@layout/include_setup_header" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/setup_divider" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/rowAdvDnsCache"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_dns_clear_cache" />
+
+                    <TextView
+                        android:id="@+id/tvAdvDnsCacheSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_dns_clear_cache_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvAdvDnsCacheValue"
+                    style="@style/ViaSetupRowValue" />
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <LinearLayout
+                android:id="@+id/rowAdvDnsTest"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_dns_test" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_dns_test_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <LinearLayout
+                android:id="@+id/rowAdvClearHistory"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_clear_history" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_clear_history_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <LinearLayout
+                android:id="@+id/rowAdvClearCookies"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_clear_cookies" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_clear_cookies_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

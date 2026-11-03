@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="tv_bar_height">68dp</dimen>
+    <dimen name="tv_button_padding">14dp</dimen>
+    <dimen name="tv_text_size_large">22sp</dimen>
+    <dimen name="tv_text_size_medium">16sp</dimen>
+    <dimen name="tv_text_size_small">14sp</dimen>
+    <dimen name="cursor_size">24dp</dimen>
+    <dimen name="tv_margin_small">8dp</dimen>
+    <dimen name="tv_margin_medium">16dp</dimen>
+    <dimen name="tv_corner_radius">10dp</dimen>
+</resources>

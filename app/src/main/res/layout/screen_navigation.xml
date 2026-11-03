@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ajustes > Navegacion.
+
+      <  Navegacion
+      
+      Velocidad del cursor               Lenta >
+      Modo del D-pad                  Cursor >
+      Centrar el cursor                     >
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/navigationScreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setup_bg"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <include
+        android:id="@+id/navigationHeader"
+        layout="@layout/include_setup_header" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/setup_divider" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- Velocidad del puntero -->
+            <LinearLayout
+                android:id="@+id/rowNavSpeed"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_cursor_speed" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_cursor_speed_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvNavSpeedValue"
+                    style="@style/ViaSetupRowValue" />
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Modo del D-pad -->
+            <LinearLayout
+                android:id="@+id/rowNavMode"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_default_mode" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_default_mode_summary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvNavModeValue"
+                    style="@style/ViaSetupRowValue" />
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Centrar puntero -->
+            <LinearLayout
+                android:id="@+id/rowNavCenterCursor"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_center_cursor" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_center_cursor_summary" />
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

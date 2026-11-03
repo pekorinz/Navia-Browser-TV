@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Barra de navegacion estilo Via, adaptada a Android TV.
+
+    Rasgos tomados de Via (verificados en el APK descompilado):
+      - Botonera de 48dp de alto, iconos a 12dp de padding (layout b.xml de Via)
+      - Fondo de cada boton = ripple sin forma (drawable p.xml de Via)
+      - Iconos monocromos tintados en vez de imagenes a color
+      - Barra agrupada: navegacion | barra de URL | acciones
+      - Paleta oscura de Via: #1c1b1d fondo, #deffffff texto (colors.xml + values-night)
+
+    Diferencias para TV:
+      - Todo con foco visible (D-pad), no solo touch
+      - Botones de 56dp en vez de 48dp: en TV se ve a 3 metros
+      - Sin ripple tactil: se usa estado de foco con contorno
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/via_bg"
+    tools:context=".ui.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- ============ BARRA SUPERIOR ESTILO VIA ============ -->
+        <LinearLayout
+            android:id="@+id/toolbarContainer"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@color/via_toolbar"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <!-- Navegacion: atras / adelante -->
+            <ImageButton
+                android:id="@+id/btnBack"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_back"
+                android:src="@drawable/ic_via_back" />
+
+            <ImageButton
+                android:id="@+id/btnForward"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_forward"
+                android:src="@drawable/ic_via_forward" />
+
+            <!-- Barra de URL: pildora con icono de candado y texto -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_via_url_pill"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="14dp"
+                android:paddingEnd="6dp">
+
+                <ImageView
+                    android:id="@+id/ivSecurity"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_via_lock"
+                    android:tint="@color/via_text_secondary"
+                    tools:ignore="UseAppTint" />
+
+                <EditText
+                    android:id="@+id/etUrl"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:hint="@string/url_hint"
+                    android:imeOptions="actionGo"
+                    android:inputType="textUri"
+                    android:maxLines="1"
+                    android:paddingStart="2dp"
+                    android:paddingEnd="2dp"
+                    android:selectAllOnFocus="true"
+                    android:singleLine="true"
+                    android:textColor="@color/via_text_primary"
+                    android:textColorHint="@color/via_text_secondary"
+                    android:textSize="15sp" />
+
+                <ImageButton
+                    android:id="@+id/btnRefresh"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_via_icon_ripple"
+                    android:contentDescription="@string/btn_refresh"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_via_refresh"
+                    android:tint="@color/via_text_secondary" />
+
+            </LinearLayout>
+
+            <!-- Acciones -->
+            <ImageButton
+                android:id="@+id/btnHome"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_home"
+                android:src="@drawable/ic_via_home" />
+
+            <TextView
+                android:id="@+id/tvBlockedBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_marginEnd="6dp"
+                android:background="@drawable/bg_via_badge"
+                android:gravity="center"
+                android:minWidth="38dp"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
+                android:textColor="@color/via_accent"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="12"
+                tools:visibility="visible" />
+
+            <ImageButton
+                android:id="@+id/btnAdBlock"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_adblock"
+                android:src="@drawable/ic_via_shield" />
+
+            <ImageButton
+                android:id="@+id/btnTabs"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_tabs"
+                android:src="@drawable/ic_via_tabs" />
+
+            <!-- Menu: hamburguesa (abre ajustes) -->
+            <ImageButton
+                android:id="@+id/btnSettings"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_menu"
+                android:src="@drawable/ic_via_menu" />
+
+            <!-- Cerrar/exportar: chevron ">" que despliega el menu secundario -->
+            <ImageButton
+                android:id="@+id/btnMore"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_more"
+                android:src="@drawable/ic_chevron_right" />
+
+            <!-- Encendido: apaga el navegador -->
+            <ImageButton
+                android:id="@+id/btnCollapseToolbar"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_exit_menu"
+                android:src="@drawable/ic_via_power" />
+
+        </LinearLayout>
+
+        <!-- Línea de progreso -->
+        <ProgressBar
+            android:id="@+id/pbLoading"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:indeterminate="false"
+            android:max="100"
+            android:progressTint="@color/via_accent"
+            android:visibility="gone" />
+
+        <com.pekorinz.via2.webview.TVWebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <com.pekorinz.via2.dpad.CursorOverlayView
+        android:id="@+id/cursorOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <include
+        android:id="@+id/settingsScreen"
+        layout="@layout/screen_settings" />
+
+    <!-- Submenu: Bloqueo de anuncios (via Ajustes > Privacidad) -->
+    <include
+        android:id="@+id/adBlockScreen"
+        layout="@layout/screen_adblock" />
+
+    <!-- Submenu: Suscripciones de filtros (via Bloqueo de anuncios) -->
+    <include
+        android:id="@+id/subscriptionsScreen"
+        layout="@layout/screen_subscriptions" />
+
+    <!-- Submenu: DNS del navegador -->
+    <include
+        android:id="@+id/dnsScreen"
+        layout="@layout/screen_dns" />
+
+    <!-- Submenu: Navegacion -->
+    <include
+        android:id="@+id/navigationScreen"
+        layout="@layout/screen_navigation" />
+
+    <!-- Submenu: Apariencia -->
+    <include
+        android:id="@+id/appearanceScreen"
+        layout="@layout/screen_appearance" />
+
+    <!-- Submenu: Avanzado -->
+    <include
+        android:id="@+id/advancedScreen"
+        layout="@layout/screen_advanced" />
+
+    <!-- Submenu: Acerca de -->
+    <include
+        android:id="@+id/aboutScreen"
+        layout="@layout/screen_about" />
+
+    <!-- Menu rapido emergente (estilo Via blanco). Va al final para quedar encima. -->
+    <include
+        android:id="@+id/quickMenu"
+        layout="@layout/quick_menu" />
+
+</FrameLayout>

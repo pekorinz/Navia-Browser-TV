@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ajustes > Apariencia.
+
+      <  Apariencia
+      
+      Modo nocturno                          ●
+      Sitio de escritorio                    ●
+      Modo incognito                         ●
+
+    Los tres interruptores actuan sobre la pagina abierta al momento: el
+    nocturno inyecta el CSS, el de escritorio cambia el User-Agent e incognito
+    limpia cookies, cache e historial.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/appearanceScreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setup_bg"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <include
+        android:id="@+id/appearanceHeader"
+        layout="@layout/include_setup_header" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/setup_divider" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <LinearLayout
+                android:id="@+id/rowAppNight"
+                style="@style/ViaSetupToggleRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_night_mode" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_night_mode_summary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/swAppNight"
+                    style="@style/ViaSetupSwitch"
+                    android:background="@drawable/bg_switch_off" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <LinearLayout
+                android:id="@+id/rowAppDesktop"
+                style="@style/ViaSetupToggleRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_desktop_mode" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_desktop_mode_summary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/swAppDesktop"
+                    style="@style/ViaSetupSwitch"
+                    android:background="@drawable/bg_switch_off" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <LinearLayout
+                android:id="@+id/rowAppIncognito"
+                style="@style/ViaSetupToggleRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_incognito" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_incognito_summary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/swAppIncognito"
+                    style="@style/ViaSetupSwitch"
+                    android:background="@drawable/bg_switch_off" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

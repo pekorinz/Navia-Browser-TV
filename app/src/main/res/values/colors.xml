@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Colores tomados del Via real (colors.xml + values-night/colors.xml del APK).
+
+    Via usa un tema claro y otro oscuro. Aqui solo se usa la paleta OSCURA,
+    porque el navegador es para TV (se ve a oscuras y cansa menos).
+
+    Originales de Via -> nombre en Via2:
+      n  #1c1b1d  -> via_bg          (fondo de la app, tema oscuro)
+      ah #efefef  -> via_text_primary (texto, tema oscuro)
+      ab #9e9e9e  -> via_text_secondary
+      g  #d64146  -> via_accent      (rojo de marca de Via)
+      l  #30808080 -> via_ripple     (toque de los botones)
+      t  #232323  -> via_toolbar     (barra)
+      o  #30808080 -> via_separator
+-->
+<resources>
+    <!-- Base -->
+    <color name="via_bg">#1c1b1d</color>
+    <color name="via_toolbar">#232323</color>
+    <color name="via_surface">#2a2a2c</color>
+    <color name="via_surface_alt">#333335</color>
+
+    <!-- Texto -->
+    <color name="via_text_primary">#efefef</color>
+    <color name="via_text_secondary">#9e9e9e</color>
+    <color name="via_text_disabled">#616161</color>
+
+    <!-- Marca Via -->
+    <color name="via_accent">#d64146</color>
+    <color name="via_accent_soft">#33d64146</color>
+
+    <!-- Ajustes: linea entre filas y fondo de la fila enfocada -->
+    <color name="via_divider">#1FFFFFFF</color>
+    <color name="via_focus_bg">#26d64146</color>
+
+    <!-- Estados -->
+    <color name="via_ripple">#30808080</color>
+    <color name="via_focus_ring">#efefef</color>
+    <color name="via_separator">#30808080</color>
+    <color name="via_secure">#4caf50</color>
+    <color name="via_insecure">#ff9800</color>
+
+    <!-- Modos del D-pad (se mantienen los colores que ya usaba Via2) -->
+    <color name="via_mode_cursor">#ff9800</color>
+    <color name="via_mode_scroll">#4caf50</color>
+    <color name="via_mode_focus">#00bcd4</color>
+
+    <!-- Compatibilidad: nombres viejos que usa Via2 en otros sitios -->
+    <color name="tv_bg_dark">#1c1b1d</color>
+    <color name="tv_bar_bg">#232323</color>
+    <color name="tv_card_bg">#2a2a2c</color>
+    <color name="tv_text_primary">#efefef</color>
+    <color name="tv_text_secondary">#9e9e9e</color>
+    <color name="tv_focus_border">#efefef</color>
+    <color name="tv_focus_bg">#3a3a3d</color>
+    <color name="tv_accent">#d64146</color>
+    <color name="cursor_pointer_color">#d64146</color>
+    <color name="cursor_pointer_stroke">#efefef</color>
+
+    <!-- ===== Menu rapido estilo Via (blanco) ===== -->
+    <!-- Panel blanco: el menu real de Via es blanco con iconos negros -->
+    <color name="qm_card">#FFFFFF</color>
+    <color name="qm_icon">#1C1B1D</color>
+    <color name="qm_text">#3C3C3C</color>
+    <color name="qm_divider">#1F000000</color>
+    <!-- Resaltado al enfocar con el D-pad: gris muy claro, como el ripple de Via -->
+    <color name="qm_focus_bg">#EDEDED</color>
+    <color name="qm_focus_stroke">#1C1B1D</color>
+    <color name="qm_press_bg">#E0E0E0</color>
+    <color name="mode_badge_cursor">#ff9800</color>
+    <color name="mode_badge_scroll">#4caf50</color>
+    <color name="mode_badge_focus">#00bcd4</color>
+</resources>

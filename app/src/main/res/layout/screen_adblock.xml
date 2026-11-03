@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ajustes > Privacidad y sitios > Bloqueo de anuncios.
+
+    Replica la captura de Via:
+      <  Bloqueo de anuncios
+      
+      Bloqueo de anuncios                    ●
+      Activado: 16914 anuncios bloqueados...
+      
+      Activar filtros integrados             ●
+      Filtros personalizados                 ●
+      Suscripciones de filtros               >
+      Bloqueo en este sitio                  ●
+
+    Todos los interruptores mandan sobre el bloqueador de verdad: apagar uno
+    deja de cargar esas reglas en la siguiente recarga.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/adBlockScreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setup_bg"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <include
+        android:id="@+id/adBlockHeader"
+        layout="@layout/include_setup_header" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/setup_divider" />
+
+    <ScrollView
+        android:id="@+id/adBlockScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- Bloqueo de anuncios: ON/OFF global -->
+            <LinearLayout
+                android:id="@+id/rowAdBlockMaster"
+                style="@style/ViaSetupToggleRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_adblock_global" />
+
+                    <TextView
+                        android:id="@+id/tvAdBlockMasterSummary"
+                        style="@style/ViaSetupRowSummary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/swAdBlockMaster"
+                    style="@style/ViaSetupSwitch"
+                    android:background="@drawable/bg_switch_on" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Filtros integrados (simple.txt de Via) -->
+            <LinearLayout
+                android:id="@+id/rowAdBlockBuiltin"
+                style="@style/ViaSetupToggleRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_adblock_builtin" />
+
+                    <TextView
+                        android:id="@+id/tvAdBlockBuiltinSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_adblock_builtin_summary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/swAdBlockBuiltin"
+                    style="@style/ViaSetupSwitch"
+                    android:background="@drawable/bg_switch_on" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Filtros descargados (suscripciones) -->
+            <LinearLayout
+                android:id="@+id/rowAdBlockCustom"
+                style="@style/ViaSetupToggleRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_adblock_custom" />
+
+                    <TextView
+                        android:id="@+id/tvAdBlockCustomSummary"
+                        style="@style/ViaSetupRowSummary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/swAdBlockCustom"
+                    style="@style/ViaSetupSwitch"
+                    android:background="@drawable/bg_switch_off" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Suscripciones: navega -->
+            <LinearLayout
+                android:id="@+id/rowAdBlockSubscriptions"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_adblock_subscriptions" />
+
+                    <TextView
+                        android:id="@+id/tvAdBlockSubsSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_adblock_subscriptions_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Bloqueo en este sitio -->
+            <LinearLayout
+                android:id="@+id/rowAdBlockCurrentSite"
+                style="@style/ViaSetupToggleRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_adblock_current_site" />
+
+                    <TextView
+                        android:id="@+id/tvCurrentSiteHost"
+                        style="@style/ViaSetupRowSummary" />
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/swAdBlockCurrentSite"
+                    style="@style/ViaSetupSwitch"
+                    android:background="@drawable/bg_switch_on" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Contador de bloqueos con boton de reinicio a la derecha -->
+            <LinearLayout style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_blocked_stats" />
+
+                    <TextView
+                        android:id="@+id/tvSettingBlockedStats"
+                        style="@style/ViaSetupRowSummary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvSettingBlockedReset"
+                    style="@style/ViaSetupHeaderAction"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="false"
+                    android:minWidth="0dp"
+                    android:text="@string/setting_blocked_reset" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

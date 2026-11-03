@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ajustes > Bloqueo de anuncios > Suscripciones de filtros.
+
+    Replica la captura de Via:
+      <  Suscripciones de filtros             ACTUALIZAR
+      
+      Intervalo de actualizacion
+      Nunca
+      
+      SUSCRIPCIONES DE FILTROS
+      EasyList                              ●
+      83895 filtros, actualizado 18 oct 2026
+      ...
+
+    Las filas de cada lista se crean en Kotlin, en subsListContainer, porque
+    dependen de lo que haya descargado: no se pueden clavar en el XML.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/subscriptionsScreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setup_bg"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <!-- CABECERA con la accion ACTUALIZAR -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/setup_bg"
+        android:gravity="center_vertical"
+        android:minHeight="64dp"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="12dp">
+
+        <ImageButton
+            android:id="@+id/btnSubsBack"
+            style="@style/ViaSetupBack"
+            android:src="@drawable/ic_chevron_left" />
+
+        <TextView
+            style="@style/ViaSetupTitle"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:text="@string/setting_adblock_subscriptions" />
+
+        <TextView
+            android:id="@+id/btnSubsUpdate"
+            style="@style/ViaSetupHeaderAction"
+            android:clickable="true"
+            android:text="@string/subs_update" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/setup_divider" />
+
+    <ScrollView
+        android:id="@+id/subsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- Intervalo de actualizacion -->
+            <LinearLayout
+                android:id="@+id/rowSubsInterval"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/subs_interval" />
+
+                    <TextView
+                        android:id="@+id/tvSubsInterval"
+                        style="@style/ViaSetupRowSummary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <TextView
+                style="@style/ViaSetupGroupLabel"
+                android:text="@string/setting_adblock_subscriptions" />
+
+            <!-- Se rellena en Kotlin con las suscripciones reales -->
+            <LinearLayout
+                android:id="@+id/subsListContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- Texto de ayuda cuando no hay ninguna -->
+            <TextView
+                android:id="@+id/tvSubsEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="24dp"
+                android:text="@string/subs_empty"
+                android:textColor="@color/setup_text_secondary"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

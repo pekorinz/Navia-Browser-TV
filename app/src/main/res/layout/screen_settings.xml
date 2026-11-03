@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Ajustes - pantalla RAIZ, como en Via.
+
+      <  Ajustes
+      
+      Navegacion                     >
+      Apariencia                     >
+      Privacidad y sitios            >
+      DNS del navegador              >
+      Avanzado                       >
+      Acerca de                      >
+
+    Cada fila es una SECCION que abre otra pantalla; no hay dialogos sueltos.
+    Todos los controles son reales.
+
+    Se declara fila por fila (sin repetir un mismo include) para que cada una
+    tenga YA su id en el XML: las incluye el <include> con android:id y asi el
+    grupo de foco del D-pad funciona sin tocar nada en Kotlin.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsScreen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/setup_bg"
+    android:orientation="vertical"
+    android:visibility="gone">
+
+    <include
+        android:id="@+id/settingsHeader"
+        layout="@layout/include_setup_header" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/setup_divider" />
+
+    <ScrollView
+        android:id="@+id/settingsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:id="@+id/settingsRootList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- Navegacion -->
+            <LinearLayout
+                android:id="@+id/rowMenuGeneral"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/settings_section_navigation" />
+
+                    <TextView
+                        android:id="@+id/tvMenuGeneralSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/settings_section_navigation_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Apariencia -->
+            <LinearLayout
+                android:id="@+id/rowMenuAppearance"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/settings_section_appearance" />
+
+                    <TextView
+                        android:id="@+id/tvMenuAppearanceSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/settings_section_appearance_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Privacidad y sitios (bloqueo de anuncios) -->
+            <LinearLayout
+                android:id="@+id/rowMenuPrivacy"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/settings_section_privacy" />
+
+                    <TextView
+                        android:id="@+id/tvMenuPrivacySummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/settings_section_privacy_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- DNS del navegador -->
+            <LinearLayout
+                android:id="@+id/rowMenuDns"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/settings_section_dns" />
+
+                    <TextView
+                        android:id="@+id/tvMenuDnsSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/settings_section_dns_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Avanzado -->
+            <LinearLayout
+                android:id="@+id/rowMenuAdvanced"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/settings_section_advanced" />
+
+                    <TextView
+                        android:id="@+id/tvMenuAdvancedSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/settings_section_advanced_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Acerca de -->
+            <LinearLayout
+                android:id="@+id/rowMenuAbout"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/settings_section_about" />
+
+                    <TextView
+                        android:id="@+id/tvMenuAboutSummary"
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/settings_section_about_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>
