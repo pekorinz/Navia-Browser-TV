@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -23,6 +24,7 @@ import android.widget.ProgressBar
 import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
+import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.util.Base64
 import androidx.activity.OnBackPressedCallback
@@ -58,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var toolbarContainer: ViewGroup
     private lateinit var urlPill: ViewGroup
     private lateinit var webView: TVWebView
+    private lateinit var fullscreenContainer: FrameLayout
     private lateinit var cursorOverlay: CursorOverlayView
     private lateinit var etUrl: EditText
     private lateinit var btnAdBlock: ImageButton
@@ -70,6 +73,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabsDrawerItems: LinearLayout
     private lateinit var btnTabsDrawerClose: ImageButton
     private lateinit var btnNewTab: View
+
+    private var customView: View? = null
+    private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     private val homePageUrl = "file:///android_asset/home_page.html"
     private val tabsList = mutableListOf<String>()
@@ -134,6 +140,7 @@ class MainActivity : AppCompatActivity() {
         toolbarContainer = findViewById(R.id.toolbarContainer)
         urlPill = findViewById(R.id.urlPill)
         webView = findViewById(R.id.webView)
+        fullscreenContainer = findViewById(R.id.fullscreenContainer)
         cursorOverlay = findViewById(R.id.cursorOverlay)
         settingsScreen = findViewById(R.id.settingsScreen)
         etUrl = findViewById(R.id.etUrl)
@@ -207,6 +214,12 @@ class MainActivity : AppCompatActivity() {
                 if (webView.url?.substringBefore('#') == homePageUrl) {
                     webView.post { updateHomePageContent() }
                 }
+            },
+            onShowCustomViewCallback = { view, callback ->
+                showCustomView(view, callback)
+            },
+            onHideCustomViewCallback = {
+                hideCustomView()
             }
         )
 
@@ -225,6 +238,63 @@ class MainActivity : AppCompatActivity() {
             }
             if (isNightMode) applyNightMode()
         }
+    }
+
+    private fun showCustomView(view: View, callback: WebChromeClient.CustomViewCallback) {
+        if (customView != null) {
+            callback.onCustomViewHidden()
+            return
+        }
+
+        customView = view
+        customViewCallback = callback
+
+        toolbarContainer.visibility = View.GONE
+        cursorOverlay.visibility = View.GONE
+        webView.visibility = View.GONE
+
+        fullscreenContainer.addView(
+            view,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+        fullscreenContainer.visibility = View.VISIBLE
+        fullscreenContainer.bringToFront()
+
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        )
+
+        view.isFocusable = true
+        view.isFocusableInTouchMode = true
+        view.requestFocus()
+    }
+
+    private fun hideCustomView() {
+        val view = customView ?: return
+
+        fullscreenContainer.visibility = View.GONE
+        fullscreenContainer.removeView(view)
+
+        customViewCallback?.onCustomViewHidden()
+        customView = null
+        customViewCallback = null
+
+        webView.visibility = View.VISIBLE
+        cursorOverlay.visibility = View.VISIBLE
+
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
+
+        webView.requestFocus()
     }
 
     private fun setupDPadController() {
@@ -432,7 +502,9 @@ class MainActivity : AppCompatActivity() {
     private fun setupBackPressedHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (isTabsDrawerOpen) {
+                if (customView != null) {
+                    hideCustomView()
+                } else if (isTabsDrawerOpen) {
                     hideTabsDrawer()
                 } else if (isQuickMenuOpen) {
                     hideQuickMenu()
@@ -472,6 +544,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (customView != null) {
+            if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+                if (event.action == KeyEvent.ACTION_DOWN) {
+                    hideCustomView()
+                }
+                return true
+            }
+            return super.dispatchKeyEvent(event)
+        }
+
         if (isTabsDrawerOpen) {
             return dispatchKeyEventInTabsDrawer(event)
         }
@@ -788,6 +870,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        if (customView != null) {
+            hideCustomView()
+        }
         faviconExecutor.shutdownNow()
         DnsManager.stop()
         super.onDestroy()
@@ -2380,7 +2465,6 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
-
     /**
      * Prueba el DNS de verdad: resuelve un dominio por el proveedor activo y
      * cronometra. No simula nada: si el proveedor no responde, se dice.
@@ -2421,8 +2505,8 @@ class MainActivity : AppCompatActivity() {
                     .setMessage(mensaje)
                     .setPositiveButton(R.string.dialog_ok, null)
                     .showThemed()
-                    updateDnsScreen()
-                    updateAdvancedScreen()
+                updateDnsScreen()
+                updateAdvancedScreen()
             }
         }
         Thread(resultado, "via2-dns-test").apply { isDaemon = true }.start()
@@ -2518,7 +2602,7 @@ class MainActivity : AppCompatActivity() {
           if((bodyBg!==null && bodyBg<0.45)||(pageBg!==null && pageBg<0.45)) return;
           var s=document.createElement('style');
           s.id=id;
-          s.textContent='html{filter:invert(1) hue-rotate(180deg);background:#000}'+
+          s.textContent='html{filter:invert(1) hue-rotate(180deg);background:#000}'+ 
             'img,video,picture,canvas,svg,iframe,[style*="background-image"]{filter:invert(1) hue-rotate(180deg)}';
           (document.head||document.documentElement).appendChild(s);
         })();
