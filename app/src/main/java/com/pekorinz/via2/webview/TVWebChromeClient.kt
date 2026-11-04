@@ -1,5 +1,6 @@
 package com.pekorinz.via2.webview
 
+import android.graphics.Bitmap
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 
@@ -9,7 +10,8 @@ import android.webkit.WebView
  */
 class TVWebChromeClient(
     private val onProgressChanged: (Int) -> Unit,
-    private val onTitleReceived: (String) -> Unit
+    private val onTitleReceived: (String) -> Unit,
+    private val onIconReceived: (WebView, Bitmap) -> Unit = { _, _ -> }
 ) : WebChromeClient() {
 
     override fun onProgressChanged(view: WebView, newProgress: Int) {
@@ -20,5 +22,10 @@ class TVWebChromeClient(
     override fun onReceivedTitle(view: WebView, title: String) {
         super.onReceivedTitle(view, title)
         onTitleReceived(title)
+    }
+
+    override fun onReceivedIcon(view: WebView, icon: Bitmap) {
+        super.onReceivedIcon(view, icon)
+        onIconReceived(view, icon)
     }
 }

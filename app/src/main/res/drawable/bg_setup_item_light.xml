@@ -3,23 +3,25 @@
 
     <item android:state_focused="true">
         <shape android:shape="rectangle">
-            <corners android:radius="10dp" />
-            <solid android:color="#E2E8F0" />
-            <stroke android:width="3dp" android:color="#0284C7" />
+            <corners android:radius="8dp" />
+            <solid android:color="@color/setup_focus_bg" />
+            <stroke
+                android:width="2dp"
+                android:color="@color/setup_focus_stroke" />
         </shape>
     </item>
 
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <corners android:radius="10dp" />
-            <solid android:color="#CBD5E1" />
+            <corners android:radius="8dp" />
+            <solid android:color="#F0F1F3" />
         </shape>
     </item>
 
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@android:color/transparent" />
-            <corners android:radius="10dp" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
 

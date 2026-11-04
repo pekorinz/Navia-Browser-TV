@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Navegador TV</string>
+    <string name="app_name">Navia Browser TV</string>
     <string name="url_hint">Escribe una dirección URL o búsqueda…</string>
+    <string name="url_edit_prompt">Dirección web. Pulsa OK para editar; usa las flechas para seguir navegando.</string>
     <string name="btn_back">Atrás</string>
     <string name="btn_forward">Adelante</string>
     <string name="btn_home">Inicio</string>
@@ -15,6 +16,10 @@
     <string name="settings_back">← Navegador</string>
     <string name="tabs_title">Gestor de Pestañas</string>
     <string name="new_tab">Nueva Pestaña</string>
+    <string name="tab_current_description">%1$s, pestaña actual</string>
+    <string name="tab_select_description">Cambiar a %1$s</string>
+    <string name="close_tabs_drawer">Cerrar pestañas</string>
+    <string name="no_previous_tabs">No hay pestañas anteriores para restablecer.</string>
 
     <!-- D-Pad Modes -->
     <string name="mode_cursor">Modo Cursor</string>
@@ -23,7 +28,7 @@
     <string name="mode_changed_format">Modo cambiado a: %1$s</string>
 
     <!-- Dialogs and Notices -->
-    <string name="exit_dialog_title">Salir de Navegador TV</string>
+    <string name="exit_dialog_title">Salir de Navia Browser TV</string>
     <string name="exit_dialog_message">¿Deseas cerrar la aplicación?</string>
     <string name="dialog_yes">Sí</string>
     <string name="dialog_no">No</string>
@@ -33,11 +38,11 @@
     <string name="http_warning_title">Conexión No Segura (HTTP)</string>
     <string name="http_warning_message">Este sitio web no utiliza HTTPS. ¿Deseas continuar bajo tu propio riesgo?</string>
 
-    <string name="settings_title">Ajustes del Navegador</string>
+    <string name="settings_title">Ajustes</string>
     <string name="settings_subtitle">Personaliza la navegación para tu control remoto.</string>
-    <string name="settings_section_navigation">NAVEGACIÓN</string>
-    <string name="settings_section_privacy">PRIVACIDAD Y SITIOS</string>
-    <string name="settings_section_dns">DNS DEL NAVEGADOR</string>
+    <string name="settings_section_navigation">Navegación</string>
+    <string name="settings_section_privacy">Privacidad y sitios</string>
+    <string name="settings_section_dns">DNS del navegador</string>
     <string name="settings_footer">Los ajustes se guardan en este dispositivo.</string>
     <string name="settings_action">Ejecutar</string>
     <string name="setting_cursor_speed">Velocidad del Cursor</string>
@@ -67,6 +72,7 @@
     <string name="setting_dns_summary">Elige con qué DNS resuelve el navegador. Solo afecta a las páginas que abres aquí, no al resto de la TV.</string>
     <string name="setting_dns_custom">URL DoH personalizada</string>
     <string name="setting_dns_custom_summary">Dirección completa del servidor DNS-over-HTTPS (debe empezar por https://).</string>
+    <string name="dns_custom_unconfigured">Sin configurar</string>
     <string name="setting_dns_status">Estado del DNS</string>
     <string name="setting_dns_status_summary">Consultas realizadas, memoria caché y último error.</string>
     <string name="setting_dns_clear_cache">Vaciar caché DNS</string>
@@ -157,6 +163,7 @@
     <string name="settings_section_advanced_summary">Centrar cursor, caché y datos de navegación</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_about_summary">Versión, reglas cargadas y estadísticas</string>
+    <string name="settings_adblock_title">Bloqueo de anuncios</string>
 
     <!-- ===== Bloqueo de anuncios ===== -->
     <string name="setting_adblock_builtin">Activar filtros integrados</string>
@@ -187,7 +194,7 @@
     <!-- ===== Diálogos de secciones ===== -->
     <string name="general_dialog_format">Velocidad del cursor: %1$s\nModo del D-pad: %2$s</string>
     <string name="settings_saved">Ajuste guardado</string>
-    <string name="about_dialog_format">Via2 para Android TV\n\nReglas cargadas: %1$s\nFiltros suscritos: %2$d\nAnuncios bloqueados: %3$d\n\nBasado en la interfaz de Via Browser.</string>
+    <string name="about_dialog_format">Navia Browser TV\n\nReglas cargadas: %1$s\nFiltros suscritos: %2$d\nAnuncios bloqueados: %3$d\n\nBasado en la interfaz de Via Browser.</string>
 
     <!-- ===== Resumenes que se rellenan en tiempo real en la raiz ===== -->
     <string name="summary_navigation_format">Cursor %1$s · D-pad %2$s</string>
@@ -210,7 +217,7 @@
 
     <!-- ===== Pantalla: Apariencia ===== -->
     <string name="setting_night_mode">Modo nocturno</string>
-    <string name="setting_night_mode_summary">Oscurece la página: texto claro sobre fondo negro.</string>
+    <string name="setting_night_mode_summary">Controla el modo oscuro de las páginas desde Navia Browser TV, sin depender del sistema.</string>
     <string name="setting_desktop_mode">Sitio de escritorio</string>
     <string name="setting_desktop_mode_summary">Pide la versión de escritorio en vez de la móvil.</string>
     <string name="setting_incognito">Modo incógnito</string>
@@ -224,7 +231,7 @@
     <string name="setting_data_cleared">Datos de navegación borrados</string>
 
     <!-- ===== Pantalla: Acerca de ===== -->
-    <string name="about_app_name">Via2 para Android TV</string>
+    <string name="about_app_name">Navia Browser TV</string>
     <string name="about_version">Versión %1$s</string>
     <string name="about_rules">Reglas cargadas</string>
     <string name="about_subs">Filtros suscritos</string>

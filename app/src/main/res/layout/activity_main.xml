@@ -37,27 +37,19 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp">
 
-            <!-- Navegacion: atras / adelante -->
-            <ImageButton
-                android:id="@+id/btnBack"
-                style="@style/ViaToolbarButton"
-                android:contentDescription="@string/btn_back"
-                android:src="@drawable/ic_via_back" />
-
-            <ImageButton
-                android:id="@+id/btnForward"
-                style="@style/ViaToolbarButton"
-                android:contentDescription="@string/btn_forward"
-                android:src="@drawable/ic_via_forward" />
-
             <!-- Barra de URL: pildora con icono de candado y texto -->
             <LinearLayout
+                android:id="@+id/urlPill"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_via_url_pill"
+                android:clickable="true"
+                android:contentDescription="@string/url_edit_prompt"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingStart="14dp"
@@ -79,7 +71,8 @@
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
                     android:background="@null"
-                    android:focusable="true"
+                    android:clickable="false"
+                    android:focusable="false"
                     android:focusableInTouchMode="false"
                     android:hint="@string/url_hint"
                     android:imeOptions="actionGo"
@@ -89,6 +82,7 @@
                     android:paddingEnd="2dp"
                     android:selectAllOnFocus="true"
                     android:singleLine="true"
+                    android:cursorVisible="false"
                     android:textColor="@color/via_text_primary"
                     android:textColorHint="@color/via_text_secondary"
                     android:textSize="15sp" />
@@ -101,6 +95,19 @@
                 style="@style/ViaToolbarButton"
                 android:contentDescription="@string/btn_refresh"
                 android:src="@drawable/ic_via_refresh" />
+
+            <!-- Navegacion: atras / adelante, junto a las acciones de pagina -->
+            <ImageButton
+                android:id="@+id/btnBack"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_back"
+                android:src="@drawable/ic_via_back" />
+
+            <ImageButton
+                android:id="@+id/btnForward"
+                style="@style/ViaToolbarButton"
+                android:contentDescription="@string/btn_forward"
+                android:src="@drawable/ic_via_forward" />
 
             <ImageButton
                 android:id="@+id/btnHome"
@@ -213,5 +220,9 @@
     <include
         android:id="@+id/quickMenu"
         layout="@layout/quick_menu" />
+
+    <include
+        android:id="@+id/tabsDrawer"
+        layout="@layout/drawer_tabs" />
 
 </FrameLayout>

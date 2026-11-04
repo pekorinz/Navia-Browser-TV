@@ -2,6 +2,9 @@ package com.pekorinz.via2.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONObject
+import org.json.JSONArray
+import org.json.JSONException
 import com.pekorinz.via2.dpad.DPadMode
 
 /**
@@ -127,6 +130,61 @@ class PreferenceManager(context: Context) {
         prefs.edit().putBoolean(KEY_INCOGNITO, on).apply()
     }
 
+    fun isNightModeEnabled(): Boolean = prefs.getBoolean(KEY_NIGHT_MODE, false)
+
+    fun setNightModeEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_NIGHT_MODE, enabled).apply()
+    }
+
+    fun getSavedSessionTabs(): List<String> {
+        val raw = prefs.getString(KEY_SAVED_SESSION_TABS, null) ?: return emptyList()
+        return try {
+            val saved = JSONArray(raw)
+            List(saved.length()) { index -> saved.getString(index) }
+                .filter { it.startsWith("http://") || it.startsWith("https://") }
+        } catch (_: JSONException) {
+            emptyList()
+        }
+    }
+
+    fun getSavedSessionIndex(): Int =
+        prefs.getInt(KEY_SAVED_SESSION_INDEX, 0)
+
+    fun saveSessionTabs(urls: List<String>, selectedIndex: Int) {
+        val saved = JSONArray()
+        urls.forEach(saved::put)
+        prefs.edit()
+            .putString(KEY_SAVED_SESSION_TABS, saved.toString())
+            .putInt(KEY_SAVED_SESSION_INDEX, selectedIndex.coerceIn(0, (urls.size - 1).coerceAtLeast(0)))
+            .apply()
+    }
+
+    fun getCachedFavicon(host: String): String? {
+        if (host.isBlank()) return null
+        val raw = prefs.getString(KEY_FAVICONS, null) ?: return null
+        return try {
+            JSONObject(raw).optString(host.lowercase()).takeIf { it.isNotBlank() }
+        } catch (_: JSONException) {
+            null
+        }
+    }
+
+    fun saveFavicon(host: String, dataUri: String) {
+        if (host.isBlank() || dataUri.isBlank()) return
+        val cached = try {
+            JSONObject(prefs.getString(KEY_FAVICONS, "{}") ?: "{}")
+        } catch (_: JSONException) {
+            JSONObject()
+        }
+        val key = host.lowercase()
+        cached.put(key, dataUri)
+        while (cached.length() > MAX_CACHED_FAVICONS) {
+            val oldest = cached.keys().asSequence().firstOrNull() ?: break
+            cached.remove(oldest)
+        }
+        prefs.edit().putString(KEY_FAVICONS, cached.toString()).apply()
+    }
+
     // ------------------------------------------------- bloqueo por fuente
 
     /**
@@ -164,6 +222,7 @@ class PreferenceManager(context: Context) {
 
     companion object {
         private const val MAX_HISTORY = 200
+        private const val MAX_CACHED_FAVICONS = 80
         private const val PREFS_NAME = "navegador_tv_prefs"
         private const val KEY_DPAD_MODE = "key_dpad_mode"
         private const val KEY_ADBLOCK_ENABLED = "key_adblock_enabled"
@@ -175,6 +234,10 @@ class PreferenceManager(context: Context) {
         private const val KEY_BOOKMARKS = "key_bookmarks"
         private const val KEY_HISTORY = "key_history"
         private const val KEY_INCOGNITO = "key_incognito"
+        private const val KEY_NIGHT_MODE = "key_night_mode"
+        private const val KEY_SAVED_SESSION_TABS = "key_saved_session_tabs"
+        private const val KEY_SAVED_SESSION_INDEX = "key_saved_session_index"
+        private const val KEY_FAVICONS = "key_favicons"
         private const val KEY_ADBLOCK_BUILTIN = "key_adblock_builtin"
         private const val KEY_ADBLOCK_SUBS = "key_adblock_subs"
         private const val KEY_SUBS_LAST_UPDATE = "key_subs_last_update"

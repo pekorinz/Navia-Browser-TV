@@ -1,31 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Paleta de la pantalla de Ajustes, sacada de las capturas reales de Via.
-
-    Via usa fondo BLANCO puro en ajustes, texto casi negro y un azul/indigo
-    para los acentos (interruptores y etiquetas de grupo). El rojo de marca
-    solo aparece en la barra del navegador, no aqui.
+    Paleta clara de ajustes inspirada en las referencias de Via.
+    El color del foco se mantiene visible para el uso con D-pad.
 -->
 <resources>
 
     <!-- Fondos -->
-    <color name="setup_bg">#FFFFFFFF</color>
-    <color name="setup_surface">#F5F5F5</color>
+    <color name="setup_bg">#FFFFFF</color>
+    <color name="setup_surface">#F7F7F8</color>
 
     <!-- Texto -->
-    <color name="setup_text">#DE000000</color>
-    <color name="setup_text_secondary">#8A000000</color>
-    <color name="setup_text_hint">#61000000</color>
+    <color name="setup_text">#202124</color>
+    <color name="setup_text_secondary">#5F6368</color>
+    <color name="setup_text_hint">#777B80</color>
 
-    <!-- Acento (interruptor encendido, etiquetas de grupo) -->
-    <color name="setup_accent">#5C7CFA</color>
-    <color name="setup_accent_dim">#B0C4DE</color>
+    <!-- Acento -->
+    <color name="setup_accent">#5874D8</color>
+    <color name="setup_accent_dim">#405DBF</color>
 
     <!-- Lineas -->
-    <color name="setup_divider">#1F000000</color>
+    <color name="setup_divider">#D9DADD</color>
 
-    <!-- Foco con D-pad: fondo gris claro + contorno azul -->
-    <color name="setup_focus_bg">#E8E8E8</color>
-    <color name="setup_focus_stroke">#5C7CFA</color>
+    <!-- Foco con D-pad: contorno dorado TV y fondo destacado -->
+    <color name="setup_focus_bg">#FFF7ED</color>
+    <color name="setup_focus_stroke">#E98516</color>
 
 </resources>

@@ -1,26 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Fondo de una fila de Ajustes: sin bordes azules pesados, solo un relieve/resaltado suave con esquinas redondeadas.
--->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_focused="true">
         <shape android:shape="rectangle">
-            <corners android:radius="12dp" />
-            <solid android:color="#EAECEF" />
+            <corners android:radius="8dp" />
+            <solid android:color="#2B2C31" />
+            <stroke
+                android:width="2dp"
+                android:color="#F4A340" />
         </shape>
     </item>
 
     <item android:state_pressed="true">
         <shape android:shape="rectangle">
-            <corners android:radius="12dp" />
-            <solid android:color="#DFE2E6" />
+            <corners android:radius="8dp" />
+            <solid android:color="#334155" />
         </shape>
     </item>
 
     <item>
         <shape android:shape="rectangle">
             <solid android:color="@android:color/transparent" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
 

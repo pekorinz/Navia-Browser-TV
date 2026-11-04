@@ -4,7 +4,7 @@
 
       <  Acerca de
       
-      Via2 para Android TV
+      Navia Browser TV
       Version 1.0
       
       Reglas cargadas            3087 integradas + 94700 suscritas
@@ -73,7 +73,9 @@
 
             <!-- Filas de datos (solo lectura: no son enfocables) -->
             <LinearLayout
-                style="@style/ViaSetupNavRow">
+                style="@style/ViaSetupNavRow"
+                android:clickable="false"
+                android:focusable="false">
 
                 <LinearLayout style="@style/ViaSetupRowText">
 
@@ -90,7 +92,9 @@
             <View style="@style/ViaSetupDivider" />
 
             <LinearLayout
-                style="@style/ViaSetupNavRow">
+                style="@style/ViaSetupNavRow"
+                android:clickable="false"
+                android:focusable="false">
 
                 <LinearLayout style="@style/ViaSetupRowText">
 
@@ -107,7 +111,9 @@
             <View style="@style/ViaSetupDivider" />
 
             <LinearLayout
-                style="@style/ViaSetupNavRow">
+                style="@style/ViaSetupNavRow"
+                android:clickable="false"
+                android:focusable="false">
 
                 <LinearLayout style="@style/ViaSetupRowText">
 
@@ -124,7 +130,9 @@
             <View style="@style/ViaSetupDivider" />
 
             <LinearLayout
-                style="@style/ViaSetupNavRow">
+                style="@style/ViaSetupNavRow"
+                android:clickable="false"
+                android:focusable="false">
 
                 <LinearLayout style="@style/ViaSetupRowText">
 

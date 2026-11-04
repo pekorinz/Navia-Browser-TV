@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>Inicio - Navia Browser TV</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --fondo: #f5f6f8;
+            --superficie: #ffffff;
+            --texto: #202124;
+            --texto-secundario: #697078;
+            --borde: #e1e4e8;
+            --acento: #f57c00;
+            --foco: #fff3e5;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 28px 7vw 40px;
+            background: var(--fondo);
+            color: var(--texto);
+            font-family: Arial, sans-serif;
+        }
+
+        main {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+        }
+
+        .marca {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .marca-icono {
+            display: grid;
+            width: 48px;
+            height: 48px;
+            place-items: center;
+            border-radius: 15px;
+            background: var(--acento);
+            color: white;
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .marca-nombre {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .marca-subtitulo {
+            margin: 4px 0 0;
+            color: var(--texto-secundario);
+            font-size: 14px;
+        }
+
+        .bienvenida {
+            margin: 0 0 16px;
+            font-size: clamp(30px, 4vw, 44px);
+            letter-spacing: -1px;
+        }
+
+        .busqueda {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-height: 64px;
+            padding: 8px 10px 8px 22px;
+            border: 1px solid var(--borde);
+            border-radius: 18px;
+            background: var(--superficie);
+            box-shadow: 0 8px 26px #1c27330d;
+        }
+
+        .busqueda:focus-within {
+            border-color: var(--acento);
+            box-shadow: 0 0 0 3px #f57c0022;
+        }
+
+        .lupa {
+            position: relative;
+            width: 20px;
+            height: 20px;
+            flex: 0 0 20px;
+            margin: 0 2px;
+            border: 2px solid var(--texto-secundario);
+            border-radius: 50%;
+        }
+
+        .lupa::after {
+            position: absolute;
+            right: -6px;
+            bottom: -4px;
+            width: 8px;
+            height: 2px;
+            transform: rotate(48deg);
+            border-radius: 2px;
+            background: var(--texto-secundario);
+            content: "";
+        }
+
+        .busqueda input {
+            flex: 1;
+            min-width: 0;
+            height: 46px;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: var(--texto);
+            font-size: 19px;
+        }
+
+        .boton-buscar {
+            min-width: 130px;
+            height: 46px;
+            border: 0;
+            border-radius: 12px;
+            background: var(--acento);
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .restaurar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            min-height: 68px;
+            margin: 14px 0 22px;
+            padding: 12px 20px;
+            border: 1px solid #f2c99e;
+            border-radius: 14px;
+            background: #fffaf4;
+            color: var(--texto);
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .restaurar.visible { display: flex; }
+
+        .restaurar-icono {
+            color: var(--acento);
+            font-size: 24px;
+        }
+
+        .restaurar small {
+            display: block;
+            margin-top: 4px;
+            color: var(--texto-secundario);
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        .seccion { margin-top: 24px; }
+
+        .seccion-cabecera {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .seccion h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .seccion-ayuda {
+            color: var(--texto-secundario);
+            font-size: 13px;
+        }
+
+        .controles-carrusel {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-carrusel {
+            width: 42px;
+            height: 38px;
+            border: 1px solid var(--borde);
+            border-radius: 10px;
+            background: var(--superficie);
+            color: var(--texto);
+            font-size: 21px;
+        }
+
+        .control-carrusel:focus {
+            outline: 3px solid var(--acento);
+            outline-offset: 2px;
+            background: var(--foco);
+        }
+
+        .carrusel {
+            display: flex;
+            gap: 16px;
+            overflow-x: hidden;
+            padding: 4px 3px 14px;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: auto;
+            scrollbar-width: none;
+        }
+
+        .carrusel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tarjeta {
+            display: flex;
+            flex: 0 0 230px;
+            min-width: 0;
+            min-height: 100px;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 18px;
+            border: 1px solid var(--borde);
+            border-radius: 15px;
+            background: var(--superficie);
+            color: var(--texto);
+            text-decoration: none;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        .tarjeta:hover, .tarjeta:focus, .restaurar:focus, .boton-buscar:focus {
+            outline: 3px solid var(--acento);
+            outline-offset: 2px;
+            background-color: var(--foco);
+        }
+
+        .busqueda input:focus,
+        .control-carrusel:focus-visible {
+            outline: 3px solid var(--acento);
+            outline-offset: 3px;
+        }
+
+        .tarjeta-titulo {
+            overflow: hidden;
+            font-size: 16px;
+            font-weight: 700;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tarjeta-url {
+            overflow: hidden;
+            color: var(--texto-secundario);
+            font-size: 13px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .tarjeta-icono {
+            display: grid;
+            width: 34px;
+            height: 34px;
+            margin-bottom: 12px;
+            place-items: center;
+            border-radius: 10px;
+            background: #fff2e5;
+            color: var(--acento);
+            font-size: 18px;
+        }
+
+        .tarjeta-icono img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .vacio {
+            display: flex;
+            min-height: 84px;
+            align-items: center;
+            padding: 18px;
+            border: 1px dashed #cbd0d6;
+            border-radius: 14px;
+            color: var(--texto-secundario);
+            font-size: 15px;
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 24px 20px 32px; }
+            .marca { margin-bottom: 22px; }
+            .busqueda { padding-left: 14px; }
+            .boton-buscar { min-width: 88px; }
+            .tarjeta {
+                flex: 0 0 200px;
+            }
+            .seccion-ayuda { display: none; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <header class="marca">
+        <div class="marca-icono" aria-hidden="true">N</div>
+        <div>
+            <p class="marca-nombre">Navia Browser TV</p>
+            <p class="marca-subtitulo">Tu espacio para explorar</p>
+        </div>
+    </header>
+
+    <h1 class="bienvenida">¿Qué quieres visitar?</h1>
+
+    <form class="busqueda" action="https://www.google.com/search" method="get">
+        <span class="lupa" aria-hidden="true"></span>
+        <input id="searchInput" type="search" name="q" placeholder="Buscar o escribir una dirección" aria-label="Buscar o escribir una dirección">
+        <button class="boton-buscar" type="submit">Buscar</button>
+    </form>
+
+    <a class="restaurar" id="restaurar" href="navia://restore-tabs">
+        <span class="restaurar-icono" aria-hidden="true">&#8635;</span>
+        <span>
+            Restablecer pestañas abiertas anteriormente
+            <small id="restaurar-detalle"></small>
+        </span>
+    </a>
+
+    <section class="seccion" aria-labelledby="titulo-marcadores">
+        <div class="seccion-cabecera">
+            <h2 id="titulo-marcadores">Marcadores</h2>
+            <div class="controles-carrusel">
+                <span class="seccion-ayuda">Avanza tarjeta por tarjeta</span>
+                <button class="control-carrusel" type="button" data-carrusel="marcadores" data-direccion="-1" aria-label="Ver marcadores anteriores">&#8249;</button>
+                <button class="control-carrusel" type="button" data-carrusel="marcadores" data-direccion="1" aria-label="Ver más marcadores">&#8250;</button>
+            </div>
+        </div>
+        <div class="carrusel" id="marcadores" tabindex="0" aria-label="Carrusel de marcadores"></div>
+    </section>
+
+    <section class="seccion" aria-labelledby="titulo-historial">
+        <div class="seccion-cabecera">
+            <h2 id="titulo-historial">Historial reciente</h2>
+            <div class="controles-carrusel">
+                <span class="seccion-ayuda">Avanza tarjeta por tarjeta</span>
+                <button class="control-carrusel" type="button" data-carrusel="historial" data-direccion="-1" aria-label="Ver páginas anteriores">&#8249;</button>
+                <button class="control-carrusel" type="button" data-carrusel="historial" data-direccion="1" aria-label="Ver más páginas">&#8250;</button>
+            </div>
+        </div>
+        <div class="carrusel" id="historial" tabindex="0" aria-label="Carrusel del historial"></div>
+    </section>
+</main>
+
+<script>
+    (function () {
+        function crearTarjeta(item, icono) {
+            var enlace = document.createElement('a');
+            enlace.className = 'tarjeta';
+            enlace.href = item.url;
+
+            var simbolo = document.createElement('span');
+            simbolo.className = 'tarjeta-icono';
+            simbolo.setAttribute('aria-hidden', 'true');
+            if (item.icon) {
+                var imagen = document.createElement('img');
+                imagen.src = item.icon;
+                imagen.alt = '';
+                simbolo.appendChild(imagen);
+            } else {
+                simbolo.textContent = icono;
+            }
+
+            var titulo = document.createElement('span');
+            titulo.className = 'tarjeta-titulo';
+            titulo.textContent = item.title || item.url;
+
+            var url = document.createElement('span');
+            url.className = 'tarjeta-url';
+            url.textContent = item.url;
+
+            enlace.appendChild(simbolo);
+            enlace.appendChild(titulo);
+            enlace.appendChild(url);
+            return enlace;
+        }
+
+        function renderLista(id, items, icono, mensaje) {
+            var lista = document.getElementById(id);
+            lista.textContent = '';
+            if (!items.length) {
+                var vacio = document.createElement('div');
+                vacio.className = 'vacio';
+                vacio.textContent = mensaje;
+                lista.appendChild(vacio);
+                return;
+            }
+            items.forEach(function (item) {
+                if (/^https?:\/\//i.test(item.url)) {
+                    lista.appendChild(crearTarjeta(item, icono));
+                }
+            });
+        }
+
+        window.naviaHome = {
+            render: function (marcadores, historial, pestañasGuardadas) {
+                renderLista('marcadores', marcadores, '★', 'Todavía no tienes marcadores guardados.');
+                renderLista('historial', historial, '◷', 'Aquí aparecerán las páginas que visites.');
+                if (pestañasGuardadas > 0) {
+                    document.getElementById('restaurar-detalle').textContent =
+                        pestañasGuardadas + (pestañasGuardadas === 1 ? ' pestaña guardada' : ' pestañas guardadas');
+                    document.getElementById('restaurar').classList.add('visible');
+                }
+                window.scrollTo(0, 0);
+            }
+        };
+
+        document.querySelectorAll('.control-carrusel').forEach(function (boton) {
+            boton.addEventListener('click', function () {
+                var carrusel = document.getElementById(boton.dataset.carrusel);
+                var direccion = Number(boton.dataset.direccion);
+                var tarjeta = carrusel.querySelector('.tarjeta');
+                if (!tarjeta) return;
+
+                var espacio = parseFloat(getComputedStyle(carrusel).columnGap) || 0;
+                var paso = tarjeta.getBoundingClientRect().width + espacio;
+                var maximo = carrusel.scrollWidth - carrusel.clientWidth;
+                carrusel.scrollLeft = Math.max(
+                    0,
+                    Math.min(maximo, carrusel.scrollLeft + direccion * paso)
+                );
+            });
+        });
+    })();
+</script>
+</body>
+</html>

@@ -2,8 +2,12 @@ package com.pekorinz.via2.ui
 
 import android.app.DownloadManager
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.KeyEvent
@@ -16,8 +20,11 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
+import android.webkit.WebSettings
+import android.util.Base64
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -33,6 +40,14 @@ import com.pekorinz.via2.dpad.DPadMode
 import com.pekorinz.via2.webview.TVWebChromeClient
 import com.pekorinz.via2.webview.TVWebView
 import com.pekorinz.via2.webview.TVWebViewClient
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
 
@@ -41,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dpadController: DPadController
 
     private lateinit var toolbarContainer: ViewGroup
+    private lateinit var urlPill: ViewGroup
     private lateinit var webView: TVWebView
     private lateinit var cursorOverlay: CursorOverlayView
     private lateinit var etUrl: EditText
@@ -50,15 +66,24 @@ class MainActivity : AppCompatActivity() {
     private lateinit var ivSecurity: android.widget.ImageView
     private lateinit var tvBlockedBadge: TextView
     private lateinit var quickMenu: View
+    private lateinit var tabsDrawer: View
+    private lateinit var tabsDrawerItems: LinearLayout
+    private lateinit var btnTabsDrawerClose: ImageButton
+    private lateinit var btnNewTab: View
 
-    private val localTestUrl = "file:///android_asset/test_page.html"
+    private val homePageUrl = "file:///android_asset/home_page.html"
     private val tabsList = mutableListOf<String>()
     private var currentTabIndex = 0
+    private val faviconExecutor = Executors.newFixedThreadPool(3)
+    private val requestedFavicons = ConcurrentHashMap.newKeySet<String>()
 
     /** Marcadores guardados como "url\u001Ftitulo" en una sola entrada de prefs. */
     private val bookmarkSep = "\u001F"
 
     private var quickMenuHooked = false
+    private var isTabsDrawerOpen = false
+    private var tabsDrawerReturnFocus: View? = null
+    private val tabsDrawerFocusItems = mutableListOf<View>()
 
     /** true mientras el menu rapido esta abierto (bloquea el resto de la UI). */
     private var isQuickMenuOpen = false
@@ -71,6 +96,9 @@ class MainActivity : AppCompatActivity() {
 
     private var isDesktopMode = false
     private var isNightMode = false
+    private var isEditingUrl = false
+    private var isHomePage = false
+    private var urlBeforeEditing = ""
     private var currentPageTitle: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +106,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         preferenceManager = PreferenceManager(this)
+        isNightMode = preferenceManager.isNightModeEnabled()
         adBlockerManager = AdBlockerManager(this, preferenceManager)
 
         // Aplicar DNS DoH seleccionado antes de instanciar WebView
@@ -85,24 +114,25 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         setupWebView()
+        applyNightMode()
         setupDPadController()
         setupToolbarListeners()
         setupSettingsActions()
         setupBackPressedHandler()
 
-        // Inicializar gestor de pestañas ligero
-        tabsList.add(localTestUrl)
+        // La página de inicio se abre en una pestaña vacía.
+        tabsList.add(homePageUrl)
 
         // Ocultar la barra de herramientas por defecto para navegación inmersiva a pantalla completa
         toolbarContainer.visibility = View.GONE
 
-        // Cargar página de prueba local por defecto para Fase B / C
-        webView.loadUrl(localTestUrl)
+        webView.loadUrl(homePageUrl)
         webView.applyDnsProxyIfNeeded()
     }
 
     private fun initViews() {
         toolbarContainer = findViewById(R.id.toolbarContainer)
+        urlPill = findViewById(R.id.urlPill)
         webView = findViewById(R.id.webView)
         cursorOverlay = findViewById(R.id.cursorOverlay)
         settingsScreen = findViewById(R.id.settingsScreen)
@@ -112,6 +142,10 @@ class MainActivity : AppCompatActivity() {
         ivSecurity = findViewById(R.id.ivSecurity)
         tvBlockedBadge = findViewById(R.id.tvBlockedBadge)
         quickMenu = findViewById(R.id.quickMenu)
+        tabsDrawer = findViewById(R.id.tabsDrawer)
+        tabsDrawerItems = findViewById(R.id.tabsDrawerItems)
+        btnTabsDrawerClose = findViewById(R.id.btnTabsDrawerClose)
+        btnNewTab = findViewById(R.id.btnNewTab)
         updateAppThemeColors()
     }
 
@@ -120,11 +154,18 @@ class MainActivity : AppCompatActivity() {
             adBlockerManager = adBlockerManager,
             dohResolver = DnsManager.currentResolver,
             onPageUrlChanged = { url ->
-                if (!etUrl.hasFocus()) {
+                val isHomeUrl = url.substringBefore('#') == homePageUrl
+                setHomePageNavigation(isHomeUrl)
+                if (isHomeUrl) {
+                    etUrl.setText("")
+                } else if (!etUrl.hasFocus()) {
                     etUrl.setText(url)
                 }
                 if (currentTabIndex in 0 until tabsList.size) {
                     tabsList[currentTabIndex] = url
+                }
+                if (url.substringBefore('#') != homePageUrl) {
+                    saveSessionIfNeeded()
                 }
                 updateSecurityIcon(url)
             },
@@ -133,6 +174,11 @@ class MainActivity : AppCompatActivity() {
             },
             onHttpWarning = { url, proceed ->
                 showHttpWarningDialog(url, proceed)
+            },
+            onAppAction = { action ->
+                if (action == TVWebViewClient.ACTION_RESTORE_TABS) {
+                    restorePreviousTabs()
+                }
             },
             onBlockedCountChanged = { count ->
                 runOnUiThread {
@@ -153,6 +199,14 @@ class MainActivity : AppCompatActivity() {
                 if (!url.isNullOrBlank() && !preferenceManager.isIncognito()) {
                     preferenceManager.addHistory(url, title)
                 }
+            },
+            onIconReceived = { view, icon ->
+                val host = view.url?.let { Uri.parse(it).host } ?: return@TVWebChromeClient
+                val dataUri = encodeFavicon(icon) ?: return@TVWebChromeClient
+                preferenceManager.saveFavicon(host, dataUri)
+                if (webView.url?.substringBefore('#') == homePageUrl) {
+                    webView.post { updateHomePageContent() }
+                }
             }
         )
 
@@ -163,6 +217,12 @@ class MainActivity : AppCompatActivity() {
 
         // Al terminar de cargar, se reaplica el modo nocturno si estaba activo
         (webView.webViewClient as? TVWebViewClient)?.onPageFinishedCallback = { _, _ ->
+            if (isHomePage) {
+                updateHomePageContent()
+                webView.requestFocus()
+            } else if (isDesktopMode) {
+                applyDesktopViewport()
+            }
             if (isNightMode) applyNightMode()
         }
     }
@@ -208,6 +268,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateModeUi(mode: DPadMode) {
+        if (isHomePage) {
+            cursorOverlay.isCursorVisible = false
+            webView.isFocusable = true
+            webView.isFocusableInTouchMode = true
+        }
         // El chip de modo esta oculto en la barra; solo se avisa con un toast.
         val message = getString(R.string.mode_changed_format, getString(mode.labelResId))
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -223,6 +288,7 @@ class MainActivity : AppCompatActivity() {
     fun hideToolbar() {
         if (toolbarContainer.visibility != View.GONE) {
             toolbarContainer.visibility = View.GONE
+            if (isEditingUrl) finishUrlEditing(restoreOriginal = false, returnToUrlField = false)
             hideKeyboard()
             webView.requestFocus()
         }
@@ -237,6 +303,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupToolbarListeners() {
+        tabsDrawer.setOnClickListener { hideTabsDrawer() }
+        findViewById<View>(R.id.tabsDrawerPanel).setOnClickListener { }
+        btnTabsDrawerClose.setOnClickListener { hideTabsDrawer() }
+        btnNewTab.setOnClickListener {
+            tabsList.add(homePageUrl)
+            currentTabIndex = tabsList.lastIndex
+            webView.loadUrl(homePageUrl)
+            webView.applyDnsProxyIfNeeded()
+            hideTabsDrawer()
+        }
+
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
             if (webView.canGoBack()) {
                 webView.goBack()
@@ -252,7 +329,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.btnHome).setOnClickListener {
-            webView.loadUrl(localTestUrl)
+            webView.loadUrl(homePageUrl)
         }
 
         findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
@@ -268,12 +345,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.btnTabs).setOnClickListener {
-            showTabsDialog()
+            showTabsDrawer()
         }
 
         // Sanduche: abre el menu rapido blanco estilo Via
         findViewById<ImageButton>(R.id.btnSettings).setOnClickListener {
             showQuickMenu()
+        }
+
+        urlPill.setOnClickListener {
+            startUrlEditing()
         }
 
         etUrl.setOnEditorActionListener { _, actionId, _ ->
@@ -298,7 +379,43 @@ class MainActivity : AppCompatActivity() {
             }
             webView.loadUrl(input)
             webView.applyDnsProxyIfNeeded()
-            hideKeyboard()
+            if (isEditingUrl) {
+                finishUrlEditing(restoreOriginal = false, returnToUrlField = false)
+            } else {
+                hideKeyboard()
+                webView.requestFocus()
+            }
+        }
+    }
+
+    private fun startUrlEditing() {
+        if (isEditingUrl) return
+
+        isEditingUrl = true
+        urlBeforeEditing = etUrl.text.toString()
+        etUrl.isFocusable = true
+        etUrl.isFocusableInTouchMode = true
+        etUrl.isClickable = true
+        etUrl.isCursorVisible = true
+        etUrl.requestFocus()
+        etUrl.selectAll()
+        etUrl.post {
+            val inputMethod = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            inputMethod?.showSoftInput(etUrl, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+
+    private fun finishUrlEditing(restoreOriginal: Boolean, returnToUrlField: Boolean) {
+        if (restoreOriginal) etUrl.setText(urlBeforeEditing)
+        isEditingUrl = false
+        etUrl.isCursorVisible = false
+        etUrl.isClickable = false
+        etUrl.isFocusable = false
+        etUrl.isFocusableInTouchMode = false
+        hideKeyboard()
+        if (returnToUrlField) {
+            urlPill.requestFocus()
+        } else {
             webView.requestFocus()
         }
     }
@@ -315,7 +432,9 @@ class MainActivity : AppCompatActivity() {
     private fun setupBackPressedHandler() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (isQuickMenuOpen) {
+                if (isTabsDrawerOpen) {
+                    hideTabsDrawer()
+                } else if (isQuickMenuOpen) {
                     hideQuickMenu()
                 } else if (isSetupVisible()) {
                     goBackInSetup()
@@ -333,16 +452,39 @@ class MainActivity : AppCompatActivity() {
     private fun goBackInSetup() {
         val subs = findViewById<View>(R.id.subscriptionsScreen)
         val adb = findViewById<View>(R.id.adBlockScreen)
-        when {
-            subs.visibility == View.VISIBLE ->
+        when (currentSetupScreen) {
+            subs ->
                 showSetup(adb, R.id.rowAdBlockSubscriptions)
-            adb.visibility == View.VISIBLE ->
+            adb ->
                 showSetup(null, R.id.rowMenuPrivacy)
+            findViewById<View>(R.id.navigationScreen) ->
+                showSetup(null, R.id.rowMenuGeneral)
+            findViewById<View>(R.id.appearanceScreen) ->
+                showSetup(null, R.id.rowMenuAppearance)
+            findViewById<View>(R.id.dnsScreen) ->
+                showSetup(null, R.id.rowMenuDns)
+            findViewById<View>(R.id.advancedScreen) ->
+                showSetup(null, R.id.rowMenuAdvanced)
+            findViewById<View>(R.id.aboutScreen) ->
+                showSetup(null, R.id.rowMenuAbout)
             else -> showBrowserScreen()
         }
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (isTabsDrawerOpen) {
+            return dispatchKeyEventInTabsDrawer(event)
+        }
+
+        if (isEditingUrl &&
+            (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE)
+        ) {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                finishUrlEditing(restoreOriginal = true, returnToUrlField = true)
+            }
+            return true
+        }
+
         // MENU ABIERTO: el foco pertenece al menu y a nada mas.
         if (isQuickMenuOpen) {
             return dispatchKeyEventInQuickMenu(event)
@@ -373,11 +515,28 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (dpadController.handleKeyEvent(event)) {
+        if (!isHomePage && dpadController.handleKeyEvent(event)) {
             return true
         }
 
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun setHomePageNavigation(enabled: Boolean) {
+        if (isHomePage == enabled) return
+        isHomePage = enabled
+
+        if (!::dpadController.isInitialized) return
+        if (enabled) {
+            cursorOverlay.isCursorVisible = false
+            webView.isFocusable = true
+            webView.isFocusableInTouchMode = true
+            webView.requestFocus()
+        } else {
+            webView.isFocusable = dpadController.currentMode == DPadMode.FOCO
+            webView.isFocusableInTouchMode = dpadController.currentMode == DPadMode.FOCO
+            cursorOverlay.isCursorVisible = dpadController.currentMode == DPadMode.CURSOR
+        }
     }
 
     /**
@@ -466,6 +625,10 @@ class MainActivity : AppCompatActivity() {
             R.id.subscriptionsScreen -> intArrayOf(
                 R.id.rowSubsInterval, R.id.btnSubsUpdate
             )
+            R.id.navigationScreen -> intArrayOf(R.id.rowNavSpeed, R.id.rowNavMode, R.id.rowNavCenterCursor)
+            R.id.appearanceScreen -> intArrayOf(R.id.rowAppNight, R.id.rowAppDesktop, R.id.rowAppIncognito)
+            R.id.dnsScreen -> intArrayOf(R.id.rowDnsProvider, R.id.rowDnsCustom, R.id.rowDnsClearCache, R.id.rowDnsTest)
+            R.id.advancedScreen -> intArrayOf(R.id.rowAdvDnsCache, R.id.rowAdvDnsTest, R.id.rowAdvClearHistory, R.id.rowAdvClearCookies)
             else -> intArrayOf(
                 R.id.rowMenuGeneral, R.id.rowMenuAppearance, R.id.rowMenuPrivacy,
                 R.id.rowMenuDns, R.id.rowMenuAdvanced, R.id.rowMenuAbout
@@ -475,8 +638,8 @@ class MainActivity : AppCompatActivity() {
             val v = findViewById<View>(id) ?: continue
             if (v.visibility == View.VISIBLE && v.isEnabled && v.requestFocus()) return true
         }
-        // Ultimo recurso: el boton de volver de esa pantalla
-        return false
+        // About es informativo; la flecha de la propia pantalla queda como fallback.
+        return screen.findViewById<View>(R.id.btnHeaderBack)?.requestFocus() ?: false
     }
 
     /**
@@ -625,8 +788,154 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        faviconExecutor.shutdownNow()
         DnsManager.stop()
         super.onDestroy()
+    }
+
+    override fun onPause() {
+        saveSessionIfNeeded()
+        super.onPause()
+    }
+
+    private fun saveSessionIfNeeded() {
+        if (preferenceManager.isIncognito()) return
+
+        val savedTabs = tabsList.filter {
+            it.startsWith("http://") || it.startsWith("https://")
+        }
+        if (savedTabs.isEmpty()) return
+
+        val selectedUrl = tabsList.getOrNull(currentTabIndex)
+        val savedIndex = savedTabs.indexOf(selectedUrl).takeIf { it >= 0 }
+            ?: savedTabs.lastIndex
+        preferenceManager.saveSessionTabs(savedTabs, savedIndex)
+    }
+
+    private fun restorePreviousTabs() {
+        val savedTabs = preferenceManager.getSavedSessionTabs()
+        if (savedTabs.isEmpty()) {
+            toast(R.string.no_previous_tabs)
+            return
+        }
+
+        tabsList.clear()
+        tabsList.addAll(savedTabs)
+        currentTabIndex = preferenceManager.getSavedSessionIndex()
+            .coerceIn(0, tabsList.lastIndex)
+        webView.loadUrl(tabsList[currentTabIndex])
+        webView.applyDnsProxyIfNeeded()
+    }
+
+    private fun updateHomePageContent() {
+        val bookmarks = preferenceManager.getBookmarks()
+        val history = preferenceManager.getHistory().take(20)
+        val bookmarkData = homePageItemsJson(bookmarks)
+        val historyData = homePageItemsJson(history)
+        val savedTabCount = preferenceManager.getSavedSessionTabs().size
+        webView.evaluateJavascript(
+            "window.naviaHome && window.naviaHome.render($bookmarkData, $historyData, $savedTabCount);",
+            null
+        )
+        requestMissingFavicons(bookmarks + history)
+    }
+
+    private fun homePageItemsJson(items: List<Pair<String, String>>): JSONArray =
+        JSONArray().apply {
+            items.forEach { (url, title) ->
+                val host = Uri.parse(url).host
+                put(
+                    JSONObject()
+                        .put("url", url)
+                        .put("title", title)
+                        .put("icon", host?.let(preferenceManager::getCachedFavicon).orEmpty())
+                )
+            }
+        }
+
+    private fun requestMissingFavicons(items: List<Pair<String, String>>) {
+        val hosts = items.mapNotNull { (url, _) ->
+            Uri.parse(url).host?.lowercase()
+        }.distinct().filter { host ->
+            preferenceManager.getCachedFavicon(host) == null && requestedFavicons.add(host)
+        }
+
+        hosts.forEach { host ->
+            faviconExecutor.execute {
+                val dataUri = downloadFavicon(host)
+                if (dataUri != null) {
+                    preferenceManager.saveFavicon(host, dataUri)
+                    runOnUiThread {
+                        if (webView.url?.substringBefore('#') == homePageUrl) {
+                            updateHomePageContent()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun downloadFavicon(host: String): String? {
+        for (path in listOf("/favicon.ico", "/favicon.png", "/apple-touch-icon.png")) {
+            val connection = (URL("https://$host$path").openConnection() as? HttpURLConnection)
+                ?: continue
+            try {
+                connection.connectTimeout = 3500
+                connection.readTimeout = 3500
+                connection.instanceFollowRedirects = true
+                connection.setRequestProperty("User-Agent", WebSettings.getDefaultUserAgent(this))
+                connection.connect()
+                if (connection.responseCode !in 200..299 ||
+                    connection.url.protocol != "https" ||
+                    connection.contentLengthLong > MAX_FAVICON_BYTES
+                ) continue
+
+                val bytes = connection.inputStream.use { input ->
+                    val output = ByteArrayOutputStream()
+                    val buffer = ByteArray(4096)
+                    var total = 0
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        total += read
+                        if (total > MAX_FAVICON_BYTES) return null
+                        output.write(buffer, 0, read)
+                    }
+                    output.toByteArray()
+                }
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0 ||
+                    bounds.outWidth > MAX_FAVICON_DIMENSION ||
+                    bounds.outHeight > MAX_FAVICON_DIMENSION
+                ) continue
+                val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                if (bitmap != null) return encodeFavicon(bitmap)
+            } catch (e: IOException) {
+                android.util.Log.d(TAG, "No se pudo obtener el icono de $host$path", e)
+            } finally {
+                connection.disconnect()
+            }
+        }
+        return null
+    }
+
+    private fun encodeFavicon(bitmap: Bitmap): String? {
+        val ratio = minOf(1f, 64f / maxOf(bitmap.width, bitmap.height))
+        val normalized = if (ratio < 1f) {
+            Bitmap.createScaledBitmap(
+                bitmap,
+                (bitmap.width * ratio).toInt().coerceAtLeast(1),
+                (bitmap.height * ratio).toInt().coerceAtLeast(1),
+                true
+            )
+        } else {
+            bitmap
+        }
+        val output = ByteArrayOutputStream()
+        if (!normalized.compress(Bitmap.CompressFormat.PNG, 100, output)) return null
+        return "data:image/png;base64," +
+            Base64.encodeToString(output.toByteArray(), Base64.NO_WRAP)
     }
 
     /**
@@ -774,7 +1083,7 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.qmTabs).setOnClickListener {
             hideQuickMenu()
-            showTabsDialog()
+            showTabsDrawer()
         }
         findViewById<View>(R.id.qmHistory).setOnClickListener {
             hideQuickMenu()
@@ -904,49 +1213,89 @@ class MainActivity : AppCompatActivity() {
      */
     private fun toggleNightMode() {
         isNightMode = !isNightMode
+        preferenceManager.setNightModeEnabled(isNightMode)
         applyNightMode()
         toast(if (isNightMode) R.string.qm_night_on else R.string.qm_night_off)
     }
 
     private fun applyNightMode() {
-        val js = if (isNightMode) NIGHT_MODE_JS else NIGHT_MODE_OFF_JS
-        webView.evaluateJavascript(js, null)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            @Suppress("DEPRECATION")
+            webView.settings.forceDark =
+                if (isNightMode) WebSettings.FORCE_DARK_ON else WebSettings.FORCE_DARK_OFF
+        } else {
+            val js = if (isNightMode) NIGHT_MODE_JS else NIGHT_MODE_OFF_JS
+            webView.evaluateJavascript(js, null)
+        }
         updateAppThemeColors()
     }
 
     private fun updateAppThemeColors() {
-        val screenBg = if (isNightMode) Color.parseColor("#0F172A") else Color.WHITE
-        val qmCardBg = if (isNightMode) Color.parseColor("#1E293B") else Color.WHITE
-        val qmTextColor = if (isNightMode) Color.parseColor("#F8FAFC") else Color.parseColor("#3C3C3C")
-        val qmIconColor = if (isNightMode) Color.parseColor("#F8FAFC") else Color.parseColor("#1C1B1D")
+        val screenBg = Color.WHITE
+        val toolbarContent = Color.parseColor("#3C3C3C")
+
+        toolbarContainer.setBackgroundColor(Color.WHITE)
+        toolbarContainer.getChildAt(0)?.setBackgroundResource(R.drawable.bg_via_url_pill_light)
+        etUrl.setTextColor(toolbarContent)
+        etUrl.setHintTextColor(Color.parseColor("#757575"))
+        ivSecurity.setColorFilter(Color.parseColor("#5F6368"))
+        tvBlockedBadge.setTextColor(Color.parseColor("#d64146"))
+        for (id in intArrayOf(
+            R.id.btnRefresh, R.id.btnBack, R.id.btnForward, R.id.btnHome,
+            R.id.btnAdBlock, R.id.btnTabs, R.id.btnSettings
+        )) {
+            findViewById<ImageButton>(id).apply {
+                setColorFilter(toolbarContent)
+                setBackgroundResource(R.drawable.bg_via_toolbar_button_light)
+            }
+        }
 
         // 1. Setup / Settings screens background and text updates
         for (v in setupScreens()) {
             v.setBackgroundColor(screenBg)
-            updateTextViewsRecursive(v, isNightMode)
-        }
-
-        for (screenId in listOf(R.id.adBlockScreen, R.id.subscriptionsScreen, R.id.dnsScreen, R.id.navigationScreen, R.id.appearanceScreen, R.id.advancedScreen, R.id.aboutScreen)) {
-            findViewById<View>(screenId)?.let {
-                it.setBackgroundColor(screenBg)
-                updateTextViewsRecursive(it, isNightMode)
-            }
+            updateTextViewsRecursive(v, false)
+            updateSetupImagesRecursive(v, false)
+            updateSetupRowsBackgroundRecursive(v, false)
         }
 
         // 2. Quick Menu card background tint and items
         val qmCardContainer = (quickMenu as? ViewGroup)?.getChildAt(0)
-        qmCardContainer?.background?.setTint(qmCardBg)
+        qmCardContainer?.background?.setTint(Color.WHITE)
 
         for (id in TOP_IDS + GRID_IDS) {
             val cell = findViewById<View>(id) ?: continue
             if (cell is ViewGroup) {
                 for (i in 0 until cell.childCount) {
                     when (val child = cell.getChildAt(i)) {
-                        is ImageView -> child.setColorFilter(qmIconColor)
-                        is TextView -> child.setTextColor(qmTextColor)
+                        is ImageView -> child.setColorFilter(Color.parseColor("#1C1B1D"))
+                        is TextView -> child.setTextColor(Color.parseColor("#3C3C3C"))
                     }
                 }
             }
+        }
+    }
+
+    private fun updateSetupRowsBackgroundRecursive(view: View, isNight: Boolean) {
+        val bgRes = if (isNight) R.drawable.bg_setup_item else R.drawable.bg_setup_item_light
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                val child = view.getChildAt(i)
+                if (child.isClickable || child.isFocusable) {
+                    child.setBackgroundResource(bgRes)
+                }
+                updateSetupRowsBackgroundRecursive(child, isNight)
+            }
+        }
+    }
+
+    private fun updateSetupImagesRecursive(view: View, isNight: Boolean) {
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                updateSetupImagesRecursive(view.getChildAt(i), isNight)
+            }
+        } else if (view is ImageView) {
+            val color = if (isNight) Color.WHITE else Color.parseColor("#5F6368")
+            view.setColorFilter(color)
         }
     }
 
@@ -959,7 +1308,12 @@ class MainActivity : AppCompatActivity() {
                 updateTextViewsRecursive(view.getChildAt(i), isNight)
             }
         } else if (view is TextView) {
-            if (view.textSize > 15f || view.id == R.id.tvHeaderTitle) {
+            val primaryTextSize = android.util.TypedValue.applyDimension(
+                android.util.TypedValue.COMPLEX_UNIT_SP,
+                16f,
+                resources.displayMetrics
+            )
+            if (view.textSize >= primaryTextSize || view.id == R.id.tvHeaderTitle) {
                 view.setTextColor(textColor)
             } else {
                 view.setTextColor(textSecColor)
@@ -1057,7 +1411,8 @@ class MainActivity : AppCompatActivity() {
             .showThemed()
     }
 
-    /** Alterna el User-Agent entre movil y escritorio y recarga. */    private fun toggleDesktopMode() {
+    /** Alterna el User-Agent y el ancho de escritorio entre movil y escritorio. */
+    private fun toggleDesktopMode() {
         isDesktopMode = !isDesktopMode
         val ua = if (isDesktopMode) {
             getString(R.string.ua_desktop)
@@ -1068,6 +1423,30 @@ class MainActivity : AppCompatActivity() {
             ?: android.webkit.WebSettings.getDefaultUserAgent(this)
         webView.reload()
         toast(if (isDesktopMode) R.string.qm_desktop_on else R.string.qm_desktop_off)
+    }
+
+    private fun applyDesktopViewport() {
+        val viewportWidth = webView.width.coerceAtLeast(1)
+        webView.evaluateJavascript(
+            """
+            (() => {
+                const viewports = Array.from(document.querySelectorAll('meta[name="viewport"]'));
+                let viewport = viewports[0];
+                if (!viewport) {
+                    viewport = document.createElement('meta');
+                    viewport.name = 'viewport';
+                    document.head.appendChild(viewport);
+                }
+                const directives = (viewport.content || '')
+                    .split(',')
+                    .map(value => value.trim())
+                    .filter(value => value && !/^(width|initial-scale)\s*=/i.test(value));
+                viewport.content = ['width=$viewportWidth', ...directives].join(', ');
+                viewports.slice(1).forEach(item => item.remove());
+            })();
+            """.trimIndent(),
+            null
+        )
     }
 
     private fun shareCurrentPage() {
@@ -1119,24 +1498,151 @@ class MainActivity : AppCompatActivity() {
             .showThemed()
     }
 
-    private fun showTabsDialog() {
-        val tabOptions = tabsList.toTypedArray().plus(getString(R.string.new_tab))
-        AlertDialog.Builder(this)
-            .setTitle(R.string.tabs_title)
-            .setSingleChoiceItems(tabOptions, currentTabIndex) { dialog, which ->
-                if (which == tabsList.size) {
-                    tabsList.add(localTestUrl)
-                    currentTabIndex = tabsList.size - 1
-                    webView.loadUrl(localTestUrl)
-                } else {
-                    currentTabIndex = which
-                    webView.loadUrl(tabsList[which])
-                }
-                dialog.dismiss()
+    private fun showTabsDrawer() {
+        if (isTabsDrawerOpen) return
+
+        tabsDrawerReturnFocus = currentFocus
+        isTabsDrawerOpen = true
+        tabsDrawerItems.removeAllViews()
+        tabsDrawerFocusItems.clear()
+
+        tabsList.forEachIndexed { index, url ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                minimumHeight = dp(68)
+                setPadding(dp(12), dp(8), dp(12), dp(8))
+                isClickable = true
+                isFocusable = true
+                isFocusableInTouchMode = false
+                isSelected = index == currentTabIndex
+                setBackgroundResource(R.drawable.bg_tab_drawer_row)
+                contentDescription = getString(
+                    if (index == currentTabIndex) R.string.tab_current_description
+                    else R.string.tab_select_description,
+                    titleForTab(url)
+                )
             }
-            .setNegativeButton(R.string.dialog_cancel, null)
-            .showThemed()
+
+            val radio = RadioButton(this).apply {
+                isChecked = index == currentTabIndex
+                isClickable = false
+                isFocusable = false
+                isFocusableInTouchMode = false
+                buttonTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                    intArrayOf(
+                        getColor(R.color.setup_accent),
+                        getColor(R.color.setup_text_secondary)
+                    )
+                )
+            }
+            row.addView(radio, LinearLayout.LayoutParams(dp(40), dp(48)))
+
+            val textColumn = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(dp(8), 0, 0, 0)
+            }
+            val title = titleForTab(url)
+            textColumn.addView(TextView(this).apply {
+                text = title
+                setTextColor(getColor(R.color.setup_text))
+                textSize = 16f
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+            })
+            textColumn.addView(TextView(this).apply {
+                text = url
+                setTextColor(getColor(R.color.setup_text_secondary))
+                textSize = 12f
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
+            })
+            row.addView(
+                textColumn,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
+            )
+            row.setOnClickListener {
+                currentTabIndex = index
+                webView.loadUrl(tabsList[index])
+                webView.applyDnsProxyIfNeeded()
+                hideTabsDrawer()
+            }
+
+            tabsDrawerItems.addView(
+                row,
+                LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = dp(4)
+                }
+            )
+            tabsDrawerFocusItems.add(row)
+        }
+
+        tabsDrawerFocusItems.add(btnNewTab)
+        tabsDrawer.visibility = View.VISIBLE
+        tabsDrawer.post {
+            val active = tabsDrawerItems.getChildAt(currentTabIndex)
+            if (active == null || !active.requestFocus()) {
+                btnNewTab.requestFocus()
+            }
+        }
     }
+
+    private fun hideTabsDrawer() {
+        if (!isTabsDrawerOpen) return
+        isTabsDrawerOpen = false
+        tabsDrawer.visibility = View.GONE
+        val target = tabsDrawerReturnFocus
+        tabsDrawerReturnFocus = null
+        if (target != null && target.isAttachedToWindow && target.isShown) {
+            target.requestFocus()
+        } else {
+            webView.requestFocus()
+        }
+    }
+
+    private fun dispatchKeyEventInTabsDrawer(event: KeyEvent): Boolean {
+        val isDown = event.action == KeyEvent.ACTION_DOWN
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE,
+            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_GUIDE,
+            KeyEvent.KEYCODE_PROG_RED -> {
+                if (isDown) hideTabsDrawer()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER,
+            KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                if (currentFocus == null) {
+                    focusFirstTabsDrawerItem()
+                    return true
+                }
+                return super.dispatchKeyEvent(event)
+            }
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> {
+                if (!isDown) return true
+                val items = listOf(btnTabsDrawerClose) + tabsDrawerFocusItems
+                val current = items.indexOf(currentFocus)
+                val step = if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) -1 else 1
+                val next = if (current < 0) 0 else (current + step).coerceIn(0, items.lastIndex)
+                items[next].requestFocus()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> return true
+            else -> return true
+        }
+    }
+
+    private fun focusFirstTabsDrawerItem() {
+        (tabsDrawerItems.getChildAt(currentTabIndex) ?: btnNewTab).requestFocus()
+    }
+
+    private fun titleForTab(url: String): String =
+        if (url.startsWith("file://")) getString(R.string.new_tab)
+        else Uri.parse(url).host ?: url
 
     private fun showDownloadConfirmationDialog(url: String, mimeType: String?) {
         AlertDialog.Builder(this)
@@ -1203,6 +1709,17 @@ class MainActivity : AppCompatActivity() {
         val target = screen ?: settingsScreen
         target.visibility = View.VISIBLE
         currentSetupScreen = target
+        val titleRes = when (target.id) {
+            settingsScreen.id -> R.string.settings_title
+            R.id.navigationScreen -> R.string.settings_section_navigation
+            R.id.appearanceScreen -> R.string.settings_section_appearance
+            R.id.adBlockScreen -> R.string.settings_adblock_title
+            R.id.dnsScreen -> R.string.settings_section_dns
+            R.id.advancedScreen -> R.string.settings_section_advanced
+            R.id.aboutScreen -> R.string.settings_section_about
+            else -> null
+        }
+        titleRes?.let { target.findViewById<TextView>(R.id.tvHeaderTitle)?.setText(it) }
 
         // La pagina y la barra de atras dejan de aceptar foco: aunque una
         // flecha encontrara un vecino "arriba", no puede saltar al WebView.
@@ -1211,7 +1728,10 @@ class MainActivity : AppCompatActivity() {
         updateSetupValues()
 
         // El foco se pide tras el layout (ver nota en el menu rapido)
-        target.post { findViewById<View>(focusId)?.requestFocus() }
+        target.post {
+            target.findViewById<View>(focusId)?.requestFocus()
+                ?: findViewById<View>(focusId)?.requestFocus()
+        }
     }
 
     /** Bloquea (o libera) el foco de todo lo que queda DETRAS de ajustes. */
@@ -1224,16 +1744,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Las tres pantallas de ajuste que se manejan por separado. */
+    /** Todas las pantallas de ajustes y sus secciones. */
     private fun setupScreens(): List<View> = listOf(
         settingsScreen,
         findViewById(R.id.adBlockScreen),
-        findViewById(R.id.subscriptionsScreen)
+        findViewById(R.id.subscriptionsScreen),
+        findViewById(R.id.navigationScreen),
+        findViewById(R.id.appearanceScreen),
+        findViewById(R.id.dnsScreen),
+        findViewById(R.id.advancedScreen),
+        findViewById(R.id.aboutScreen)
     )
 
     private fun showBrowserScreen() {
         for (v in setupScreens()) v.visibility = View.GONE
-        settingsScreen.visibility = View.GONE
         currentSetupScreen = null
         setFocusableBehindSetup(false)
         val target = lastFocusedView ?: findViewById<View>(R.id.btnSettings)
@@ -1246,15 +1770,67 @@ class MainActivity : AppCompatActivity() {
 
     /** true si hay alguna pantalla de ajuste abierta. */
     private fun isSetupVisible(): Boolean =
-        settingsScreen.visibility == View.VISIBLE ||
-            findViewById<View>(R.id.adBlockScreen).visibility == View.VISIBLE ||
-            findViewById<View>(R.id.subscriptionsScreen).visibility == View.VISIBLE
+        setupScreens().any { it.visibility == View.VISIBLE }
 
     /** Refresca todos los valores de las pantallas de ajuste. */
     private fun updateSetupValues() {
         updateSettingsScreen()
         updateAdBlockScreen()
         updateSubscriptionsScreen()
+        updateNavigationScreen()
+        updateAppearanceScreen()
+        updateDnsScreen()
+        updateAdvancedScreen()
+        updateAboutScreen()
+    }
+
+    private fun updateNavigationScreen() {
+        val speed = preferenceManager.getCursorSpeedMultiplier()
+        val speedLabel = when {
+            speed < 0.8f -> R.string.speed_slow
+            speed > 1.2f -> R.string.speed_fast
+            else -> R.string.speed_medium
+        }
+        findViewById<TextView>(R.id.tvNavSpeedValue).setText(speedLabel)
+        findViewById<TextView>(R.id.tvNavModeValue)
+            .setText(preferenceManager.getSavedMode().labelResId)
+    }
+
+    private fun updateAppearanceScreen() {
+        setSwitch(R.id.swAppNight, isNightMode)
+        setSwitch(R.id.swAppDesktop, isDesktopMode)
+        setSwitch(R.id.swAppIncognito, preferenceManager.isIncognito())
+    }
+
+    private fun updateDnsScreen() {
+        val resolver = DnsManager.currentResolver
+        findViewById<TextView>(R.id.tvDnsProviderValue).text =
+            DnsProvider.fromId(preferenceManager.getDnsProvider()).title
+        findViewById<TextView>(R.id.tvDnsCustomValue).text =
+            preferenceManager.getDnsCustomUrl().ifBlank { getString(R.string.dns_custom_unconfigured) }
+        findViewById<TextView>(R.id.tvDnsStatusValue).text = DnsManager.stats()
+        findViewById<TextView>(R.id.tvDnsCacheValue).text =
+            (resolver?.cacheSize() ?: 0).toString()
+    }
+
+    private fun updateAdvancedScreen() {
+        val resolver = DnsManager.currentResolver
+        findViewById<TextView>(R.id.tvAdvDnsCacheValue).text =
+            (resolver?.cacheSize() ?: 0).toString()
+    }
+
+    private fun updateAboutScreen() {
+        val packageInfo = packageManager.getPackageInfo(packageName, 0)
+        findViewById<TextView>(R.id.tvAboutVersion).text =
+            getString(R.string.about_version, packageInfo.versionName.orEmpty())
+        findViewById<TextView>(R.id.tvAboutRules).text = adBlockerManager.statsLine()
+        val activeSubscriptions = adBlockerManager.subscriptions.states().values.count { it.enabled }
+        findViewById<TextView>(R.id.tvAboutSubs).text =
+            "$activeSubscriptions · ${adBlockerManager.subscriptions.activeRuleCount()}"
+        findViewById<TextView>(R.id.tvAboutBlocked).text =
+            preferenceManager.getBlockedTotal().toString()
+        findViewById<TextView>(R.id.tvAboutDns).text =
+            DnsProvider.fromId(preferenceManager.getDnsProvider()).title
     }
 
     /** Solo pinta el intervalo; la lista la redibuja refreshSubscriptionsList(). */
@@ -1340,27 +1916,121 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.rowMenuGeneral).setOnClickListener {
-            showGeneralDialog()
+            showSetup(findViewById(R.id.navigationScreen), R.id.rowNavSpeed)
         }
         findViewById<View>(R.id.rowMenuAppearance).setOnClickListener {
-            showAppearanceDialog()
+            showSetup(findViewById(R.id.appearanceScreen), R.id.rowAppNight)
         }
         findViewById<View>(R.id.rowMenuPrivacy).setOnClickListener {
             showSetup(findViewById(R.id.adBlockScreen), R.id.rowAdBlockMaster)
         }
         findViewById<View>(R.id.rowMenuDns).setOnClickListener {
-            showDnsSelectionDialog()
+            showSetup(findViewById(R.id.dnsScreen), R.id.rowDnsProvider)
         }
         findViewById<View>(R.id.rowMenuAdvanced).setOnClickListener {
-            showAdvancedDialog()
+            showSetup(findViewById(R.id.advancedScreen), R.id.rowAdvDnsCache)
         }
         findViewById<View>(R.id.rowMenuAbout).setOnClickListener {
-            showAboutDialog()
+            showSetup(findViewById(R.id.aboutScreen), R.id.btnHeaderBack)
         }
 
         // ---------------------------------------- bloqueo de anuncios
         findViewById<View>(R.id.adBlockHeader).findViewById<View>(R.id.btnHeaderBack).setOnClickListener {
             showSetup(null, R.id.rowMenuPrivacy)
+        }
+        findViewById<View>(R.id.navigationScreen).findViewById<View>(R.id.btnHeaderBack)
+            .setOnClickListener { showSetup(null, R.id.rowMenuGeneral) }
+        findViewById<View>(R.id.appearanceScreen).findViewById<View>(R.id.btnHeaderBack)
+            .setOnClickListener { showSetup(null, R.id.rowMenuAppearance) }
+        findViewById<View>(R.id.dnsScreen).findViewById<View>(R.id.btnHeaderBack)
+            .setOnClickListener { showSetup(null, R.id.rowMenuDns) }
+        findViewById<View>(R.id.advancedScreen).findViewById<View>(R.id.btnHeaderBack)
+            .setOnClickListener { showSetup(null, R.id.rowMenuAdvanced) }
+        findViewById<View>(R.id.aboutScreen).findViewById<View>(R.id.btnHeaderBack)
+            .setOnClickListener { showSetup(null, R.id.rowMenuAbout) }
+
+        findViewById<View>(R.id.rowNavSpeed).setOnClickListener {
+            val speed = preferenceManager.getCursorSpeedMultiplier()
+            val next = when {
+                speed < 0.8f -> 1.0f
+                speed < 1.2f -> 2.0f
+                else -> 0.5f
+            }
+            preferenceManager.setCursorSpeedMultiplier(next)
+            updateNavigationScreen()
+        }
+        findViewById<View>(R.id.rowNavMode).setOnClickListener {
+            dpadController.switchMode(preferenceManager.getSavedMode().next())
+            updateNavigationScreen()
+        }
+        findViewById<View>(R.id.rowNavCenterCursor).setOnClickListener {
+            cursorOverlay.centerCursor()
+        }
+        findViewById<View>(R.id.rowAppNight).setOnClickListener {
+            toggleNightMode()
+            updateAppearanceScreen()
+        }
+        findViewById<View>(R.id.rowAppDesktop).setOnClickListener {
+            toggleDesktopMode()
+            updateAppearanceScreen()
+        }
+        findViewById<View>(R.id.rowAppIncognito).setOnClickListener {
+            toggleIncognito()
+            updateAppearanceScreen()
+        }
+        findViewById<View>(R.id.rowDnsProvider).setOnClickListener {
+            showDnsSelectionDialog()
+        }
+        findViewById<View>(R.id.rowDnsCustom).setOnClickListener {
+            showDnsCustomUrlDialog()
+        }
+        findViewById<View>(R.id.rowDnsClearCache).setOnClickListener {
+            DnsManager.currentResolver?.clearCache()
+            updateDnsScreen()
+            toast(R.string.dns_cache_cleared)
+        }
+        findViewById<View>(R.id.rowDnsTest).setOnClickListener {
+            runDnsTest()
+        }
+        findViewById<View>(R.id.rowAdvDnsCache).setOnClickListener {
+            DnsManager.currentResolver?.clearCache()
+            updateAdvancedScreen()
+            toast(R.string.dns_cache_cleared)
+        }
+        findViewById<View>(R.id.rowAdvDnsTest).setOnClickListener {
+            runDnsTest()
+        }
+        findViewById<View>(R.id.rowAdvClearHistory).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.setting_clear_history)
+                .setMessage(R.string.setting_clear_history_summary)
+                .setPositiveButton(R.string.dialog_yes) { _, _ ->
+                    webView.clearHistory()
+                    preferenceManager.clearHistory()
+                    toast(R.string.qm_history_cleared)
+                }
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .showThemed()
+        }
+        findViewById<View>(R.id.rowAdvClearCookies).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.setting_clear_cookies)
+                .setMessage(R.string.setting_clear_cookies_summary)
+                .setPositiveButton(R.string.dialog_yes) { _, _ ->
+                    val cookieManager = android.webkit.CookieManager.getInstance()
+                    cookieManager.removeAllCookies {
+                        runOnUiThread {
+                            cookieManager.flush()
+                            webView.clearCache(true)
+                            webView.clearFormData()
+                            android.webkit.WebStorage.getInstance().deleteAllData()
+                            webView.reload()
+                            toast(R.string.setting_data_cleared)
+                        }
+                    }
+                }
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .showThemed()
         }
 
         findViewById<View>(R.id.rowAdBlockMaster).setOnClickListener {
@@ -1751,7 +2421,8 @@ class MainActivity : AppCompatActivity() {
                     .setMessage(mensaje)
                     .setPositiveButton(R.string.dialog_ok, null)
                     .showThemed()
-                updateSettingsScreen()
+                    updateDnsScreen()
+                    updateAdvancedScreen()
             }
         }
         Thread(resultado, "via2-dns-test").apply { isDaemon = true }.start()
@@ -1778,7 +2449,8 @@ class MainActivity : AppCompatActivity() {
                     r.configure(DnsProvider.fromId(preferenceManager.getDnsProvider()), url)
                 }
                 webView.applyDnsProxyIfNeeded()
-                updateSettingsScreen()
+                updateDnsScreen()
+                updateAdvancedScreen()
                 toast(R.string.setting_dns_custom_saved)
             }
             .setNegativeButton(R.string.dialog_cancel, null)
@@ -1798,7 +2470,8 @@ class MainActivity : AppCompatActivity() {
                 preferenceManager.setDnsProvider(selected.id)
                 DnsManager.applyFromPreferences(this, preferenceManager)
                 webView.applyDnsProxyIfNeeded()
-                updateSettingsScreen()
+                updateDnsScreen()
+                updateAdvancedScreen()
                 Toast.makeText(
                     this,
                     getString(R.string.dns_applied, selected.title),
@@ -1812,6 +2485,9 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         /** Columnas de la rejilla del menu (3 filas x 4 columnas = 12 iconos). */
+        private const val TAG = "NaviaBrowser"
+        private const val MAX_FAVICON_BYTES = 128 * 1024
+        private const val MAX_FAVICON_DIMENSION = 512
         private const val GRID_COLS = 4
 
         /** Barra superior del menu (encendido, cerrar), en orden de layout. */
@@ -1825,14 +2501,21 @@ class MainActivity : AppCompatActivity() {
         )
 
         /**
-         * Modo nocturno: invierte los colores del documento y vuelve a invertir
-         * imagenes y videos para que no salgan en negativo. Los fondos blancos
-         * pasan a negro y el texto a claro.
+         * Fallback para versiones de Android anteriores a 10. Evita invertir
+         * una pagina que ya use un fondo oscuro.
          */
         private const val NIGHT_MODE_JS = """
         (function(){
           var id='via2-night';
           if(document.getElementById(id)) return;
+          function luminance(color){
+            var m=color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+            if(!m) return null;
+            return (0.2126*Number(m[1])+0.7152*Number(m[2])+0.0722*Number(m[3]))/255;
+          }
+          var bodyBg=luminance(getComputedStyle(document.body).backgroundColor);
+          var pageBg=luminance(getComputedStyle(document.documentElement).backgroundColor);
+          if((bodyBg!==null && bodyBg<0.45)||(pageBg!==null && pageBg<0.45)) return;
           var s=document.createElement('style');
           s.id=id;
           s.textContent='html{filter:invert(1) hue-rotate(180deg);background:#000}'+

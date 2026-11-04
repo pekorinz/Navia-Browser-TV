@@ -2,13 +2,12 @@
 <!--
     Cabecera comun de las pantallas de Ajustes: "<" + titulo + [acciones].
 
-    Sobre fondo blanco. La flecha "<" y las acciones son enfocables para que
+    Sobre fondo blanco o oscuro segun el modo activo. La flecha "<" y las acciones son enfocables para que
     el mando pueda llegar a ellas; el titulo no.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/setup_bg"
     android:gravity="center_vertical"
     android:minHeight="64dp"
     android:orientation="horizontal"

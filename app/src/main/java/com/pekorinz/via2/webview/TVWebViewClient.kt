@@ -28,7 +28,8 @@ class TVWebViewClient(
     private val onHttpWarning: (String, () -> Unit) -> Unit,
     private val onBlockedCountChanged: (Int) -> Unit = {},
     private val onProgress: (Int) -> Unit = {},
-    private val onPageError: (Int, String, String) -> Unit = { _, _, _ -> }
+    private val onPageError: (Int, String, String) -> Unit = { _, _, _ -> },
+    private val onAppAction: (String) -> Unit = {}
 ) : WebViewClient() {
 
     private var blockedThisPage = 0
@@ -41,6 +42,13 @@ class TVWebViewClient(
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
         val url = request.url.toString()
         if (!request.isForMainFrame) return false
+
+        if (url == RESTORE_TABS_URL &&
+            view.url?.substringBefore('#') == HOME_PAGE_URL
+        ) {
+            onAppAction(ACTION_RESTORE_TABS)
+            return true
+        }
 
         // Esquemas que el WebView no puede abrir: se derivan al sistema.
         if (!url.startsWith("http://") && !url.startsWith("https://") &&
@@ -109,6 +117,12 @@ class TVWebViewClient(
 
     /** Se llama al terminar de cargar: aqui se reaplica el modo nocturno. */
     var onPageFinishedCallback: ((WebView, String) -> Unit)? = null
+
+    companion object {
+        private const val HOME_PAGE_URL = "file:///android_asset/home_page.html"
+        private const val RESTORE_TABS_URL = "navia://restore-tabs"
+        const val ACTION_RESTORE_TABS = "restore-tabs"
+    }
 
     override fun onReceivedError(
         view: WebView,

@@ -166,10 +166,12 @@
 
             <View style="@style/ViaSetupDivider" />
 
-            <!-- Contador de bloqueos con boton de reinicio a la derecha -->
+            <!-- Contador de bloqueos -->
             <LinearLayout
                 android:id="@+id/rowSettingBlockedStats"
-                style="@style/ViaSetupNavRow">
+                style="@style/ViaSetupNavRow"
+                android:clickable="false"
+                android:focusable="false">
 
                 <LinearLayout style="@style/ViaSetupRowText">
 
@@ -181,15 +183,27 @@
                         android:id="@+id/tvSettingBlockedStats"
                         style="@style/ViaSetupRowSummary" />
                 </LinearLayout>
+            </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvSettingBlockedReset"
-                    style="@style/ViaSetupHeaderAction"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:focusableInTouchMode="false"
-                    android:minWidth="0dp"
-                    android:text="@string/setting_blocked_reset" />
+            <View style="@style/ViaSetupDivider" />
+
+            <!-- Botón de reinicio de contador -->
+            <LinearLayout
+                android:id="@+id/tvSettingBlockedReset"
+                style="@style/ViaSetupNavRow">
+
+                <LinearLayout style="@style/ViaSetupRowText">
+
+                    <TextView
+                        style="@style/ViaSetupRowTitle"
+                        android:text="@string/setting_blocked_reset" />
+
+                    <TextView
+                        style="@style/ViaSetupRowSummary"
+                        android:text="@string/setting_blocked_reset_summary" />
+                </LinearLayout>
+
+                <ImageView style="@style/ViaSetupChevron" />
             </LinearLayout>
 
         </LinearLayout>
