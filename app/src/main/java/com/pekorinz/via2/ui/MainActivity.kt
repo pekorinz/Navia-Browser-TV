@@ -250,7 +250,6 @@ class MainActivity : AppCompatActivity() {
         customViewCallback = callback
 
         toolbarContainer.visibility = View.GONE
-        cursorOverlay.visibility = View.GONE
         webView.visibility = View.GONE
 
         fullscreenContainer.addView(
@@ -262,6 +261,10 @@ class MainActivity : AppCompatActivity() {
         )
         fullscreenContainer.visibility = View.VISIBLE
         fullscreenContainer.bringToFront()
+
+        // Asegurar que el cursor quede visible sobre el video para interactuar con controles
+        cursorOverlay.bringToFront()
+        cursorOverlay.visibility = View.VISIBLE
 
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = (
@@ -311,6 +314,9 @@ class MainActivity : AppCompatActivity() {
             },
             onRequestHideToolbar = {
                 hideToolbar()
+            },
+            getActiveFullscreenView = {
+                customView
             }
         )
         updateModeUi(dpadController.currentMode)
@@ -549,6 +555,9 @@ class MainActivity : AppCompatActivity() {
                 if (event.action == KeyEvent.ACTION_DOWN) {
                     hideCustomView()
                 }
+                return true
+            }
+            if (dpadController.handleKeyEvent(event)) {
                 return true
             }
             return super.dispatchKeyEvent(event)

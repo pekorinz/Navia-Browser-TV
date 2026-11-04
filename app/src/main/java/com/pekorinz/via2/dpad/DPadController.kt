@@ -10,8 +10,8 @@ import com.pekorinz.via2.data.PreferenceManager
 
 /**
  * Gestor del control D-Pad para Android TV.
- * Controla la navegación inmersiva full-screen, desplazamiento de páginas
- * y visibilidad dinámica de la barra de herramientas.
+ * Controla la navegación inmersiva full-screen, desplazamiento de páginas,
+ * interacción con videos en pantalla completa y visibilidad dinámica de la barra de herramientas.
  */
 class DPadController(
     private val webView: WebView,
@@ -20,7 +20,8 @@ class DPadController(
     private val preferenceManager: PreferenceManager,
     private val onModeChanged: (DPadMode) -> Unit,
     private val onRequestShowToolbar: () -> Unit,
-    private val onRequestHideToolbar: () -> Unit
+    private val onRequestHideToolbar: () -> Unit,
+    private val getActiveFullscreenView: (() -> View?)? = null
 ) {
 
     var currentMode: DPadMode = DPadMode.CURSOR
@@ -50,10 +51,12 @@ class DPadController(
      * Retorna true si el evento fue consumido.
      */
     fun handleKeyEvent(event: KeyEvent): Boolean {
-        // Si la barra de herramientas está visible y enfocada
-        if (toolbarContainer.visibility == View.VISIBLE && toolbarContainer.hasFocus()) {
+        val fullscreenView = getActiveFullscreenView?.invoke()
+        val isFullscreen = fullscreenView != null
+
+        // Si la barra de herramientas está visible y enfocada (solo fuera de pantalla completa)
+        if (!isFullscreen && toolbarContainer.visibility == View.VISIBLE && toolbarContainer.hasFocus()) {
             if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                // Al presionar Flecha Abajo en la barra, ocultarla y regresar al contenido inmersivo
                 onRequestHideToolbar()
                 return true
             }
@@ -74,8 +77,9 @@ class DPadController(
 
         when (currentMode) {
             DPadMode.CURSOR -> {
-                val maxY = if (webView.height > 0) webView.height.toFloat() - 30f else 1080f
-                val maxX = if (webView.width > 0) webView.width.toFloat() - 30f else 1920f
+                val hostView = fullscreenView ?: webView
+                val maxY = if (hostView.height > 0) hostView.height.toFloat() - 30f else 1080f
+                val maxX = if (hostView.width > 0) hostView.width.toFloat() - 30f else 1920f
 
                 when (event.keyCode) {
                     KeyEvent.KEYCODE_DPAD_UP -> {
@@ -83,12 +87,13 @@ class DPadController(
                         val minTopY = 25f
 
                         if (newY <= minTopY) {
-                            if (webView.scrollY > 0) {
+                            if (!isFullscreen && webView.scrollY > 0) {
                                 webView.scrollBy(0, -(stepPx * 2.5f).toInt())
                                 cursorOverlay.setCursorPosition(cursorOverlay.cursorX, minTopY)
-                            } else {
-                                // En el tope del documento: mostrar la barra superior
+                            } else if (!isFullscreen) {
                                 onRequestShowToolbar()
+                            } else {
+                                cursorOverlay.setCursorPosition(cursorOverlay.cursorX, minTopY)
                             }
                         } else {
                             cursorOverlay.setCursorPosition(cursorOverlay.cursorX, newY)
@@ -99,7 +104,9 @@ class DPadController(
                     KeyEvent.KEYCODE_DPAD_DOWN -> {
                         val newY = cursorOverlay.cursorY + stepPx
                         if (newY >= maxY) {
-                            webView.scrollBy(0, (stepPx * 2.5f).toInt())
+                            if (!isFullscreen) {
+                                webView.scrollBy(0, (stepPx * 2.5f).toInt())
+                            }
                             cursorOverlay.setCursorPosition(cursorOverlay.cursorX, maxY)
                         } else {
                             cursorOverlay.setCursorPosition(cursorOverlay.cursorX, newY)
@@ -110,7 +117,7 @@ class DPadController(
                     KeyEvent.KEYCODE_DPAD_LEFT -> {
                         val newX = cursorOverlay.cursorX - stepPx
                         if (newX <= 30f) {
-                            if (webView.canScrollHorizontally(-1)) {
+                            if (!isFullscreen && webView.canScrollHorizontally(-1)) {
                                 webView.scrollBy(-(stepPx * 2f).toInt(), 0)
                             }
                             cursorOverlay.setCursorPosition(30f, cursorOverlay.cursorY)
@@ -123,7 +130,7 @@ class DPadController(
                     KeyEvent.KEYCODE_DPAD_RIGHT -> {
                         val newX = cursorOverlay.cursorX + stepPx
                         if (newX >= maxX) {
-                            if (webView.canScrollHorizontally(1)) {
+                            if (!isFullscreen && webView.canScrollHorizontally(1)) {
                                 webView.scrollBy((stepPx * 2f).toInt(), 0)
                             }
                             cursorOverlay.setCursorPosition(maxX, cursorOverlay.cursorY)
@@ -142,6 +149,7 @@ class DPadController(
             }
 
             DPadMode.DESPLAZAMIENTO -> {
+                if (isFullscreen) return false
                 val scrollAmountVertical = (webView.height * 0.30f).toInt().coerceAtLeast(120)
                 val scrollAmountHorizontal = (webView.width * 0.15f).toInt().coerceAtLeast(80)
 
@@ -171,6 +179,7 @@ class DPadController(
             }
 
             DPadMode.FOCO -> {
+                if (isFullscreen) return false
                 if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP && webView.scrollY == 0) {
                     onRequestShowToolbar()
                     return true
@@ -186,7 +195,8 @@ class DPadController(
         val x = cursorOverlay.cursorX
         val y = cursorOverlay.cursorY
 
-        if (toolbarContainer.visibility == View.VISIBLE) {
+        val fullscreenView = getActiveFullscreenView?.invoke()
+        if (fullscreenView == null && toolbarContainer.visibility == View.VISIBLE) {
             val targetNativeView = findViewAtScreenLocation(toolbarContainer, x, y)
             if (targetNativeView != null) {
                 targetNativeView.requestFocus()
@@ -195,15 +205,16 @@ class DPadController(
             }
         }
 
-        val webLocation = IntArray(2)
-        webView.getLocationOnScreen(webLocation)
-        val webX = x - webLocation[0]
-        val webY = y - webLocation[1]
+        val targetView = fullscreenView ?: webView
+        val location = IntArray(2)
+        targetView.getLocationOnScreen(location)
+        val targetX = x - location[0]
+        val targetY = y - location[1]
 
         val event = MotionEvent.obtain(
-            downTime, downTime, MotionEvent.ACTION_DOWN, webX, webY, 0
+            downTime, downTime, MotionEvent.ACTION_DOWN, targetX, targetY, 0
         )
-        webView.dispatchTouchEvent(event)
+        targetView.dispatchTouchEvent(event)
         event.recycle()
     }
 
@@ -213,7 +224,8 @@ class DPadController(
         val x = cursorOverlay.cursorX
         val y = cursorOverlay.cursorY
 
-        if (toolbarContainer.visibility == View.VISIBLE) {
+        val fullscreenView = getActiveFullscreenView?.invoke()
+        if (fullscreenView == null && toolbarContainer.visibility == View.VISIBLE) {
             val targetNativeView = findViewAtScreenLocation(toolbarContainer, x, y)
             if (targetNativeView != null) {
                 lastClickDownTime = 0
@@ -221,15 +233,16 @@ class DPadController(
             }
         }
 
-        val webLocation = IntArray(2)
-        webView.getLocationOnScreen(webLocation)
-        val webX = x - webLocation[0]
-        val webY = y - webLocation[1]
+        val targetView = fullscreenView ?: webView
+        val location = IntArray(2)
+        targetView.getLocationOnScreen(location)
+        val targetX = x - location[0]
+        val targetY = y - location[1]
 
         val event = MotionEvent.obtain(
-            downTime, eventTime, MotionEvent.ACTION_UP, webX, webY, 0
+            downTime, eventTime, MotionEvent.ACTION_UP, targetX, targetY, 0
         )
-        webView.dispatchTouchEvent(event)
+        targetView.dispatchTouchEvent(event)
         event.recycle()
         lastClickDownTime = 0
     }
