@@ -48,12 +48,13 @@ class TVWebView @JvmOverloads constructor(
         @Suppress("DEPRECATION")
         settings.allowUniversalAccessFromFileURLs = false
 
-        // Optimizaciones de visualizacion para TV (16:9)
+        // Optimizaciones de visualizacion para TV (16:9) y reproduccion multimedia
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
         settings.builtInZoomControls = true
         settings.displayZoomControls = false
         settings.setSupportZoom(true)
+        settings.mediaPlaybackRequiresUserGesture = false
 
         // Seguridad y cache
         settings.domStorageEnabled = true
