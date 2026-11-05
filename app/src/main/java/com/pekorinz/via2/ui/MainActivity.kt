@@ -219,7 +219,7 @@ class MainActivity : AppCompatActivity() {
             if (isHomePage) { updateHomePageContent(); webView.requestFocus() }
             else if (isDesktopMode) applyDesktopViewport()
             if (isNightMode) applyNightMode()
-            if (isYoutubeTvSite) webView.evaluateJavascript(YOUTUBE_TV_SHADOW_JS, null)
+            
         }
     }
 
@@ -1560,26 +1560,7 @@ class MainActivity : AppCompatActivity() {
         private val TOP_IDS = arrayOf(R.id.qmPower, R.id.qmClose)
         private val GRID_IDS = arrayOf(R.id.qmNight, R.id.qmBookmarks, R.id.qmHistory, R.id.qmDownloads, R.id.qmIncognito, R.id.qmAddBookmark, R.id.qmDesktop, R.id.qmTools, R.id.qmSettings, R.id.qmFindInPage, R.id.qmTabs)
 
-        private const val YOUTUBE_TV_SHADOW_JS = """
-        (function(){
-            var id='via2-yt-tv-clean';
-            if(document.getElementById(id)) return;
-            var s=document.createElement('style');
-            s.id=id;
-            s.textContent = [
-                'ytlr-video-title, ytlr-video-title * { background: transparent !important; background-color: transparent !important; }',
-                'ytlr-video-byline, ytlr-video-byline * { background: transparent !important; background-color: transparent !important; }',
-                'ytlr-tile-metadata, ytlr-tile-metadata * { background: transparent !important; background-color: transparent !important; }',
-                '.ytlr-video-title, .ytlr-video-byline { background: transparent !important; }',
-                '[class*="video-title"], [class*="video-title"] *, [class*="video-byline"], [class*="video-byline"] * { background: transparent !important; background-color: transparent !important; }',
-                '[class*="tile-metadata"], [class*="tile-metadata"] *, [class*="metadata-renderer"], [class*="metadata-renderer"] * { background: transparent !important; background-color: transparent !important; }',
-                'ytlr-video-title, .ytlr-video-title, [class*="video-title"] { text-shadow: 0 2px 6px rgba(0,0,0,1), 0 1px 3px rgba(0,0,0,1) !important; color: #fff !important; }',
-                'ytlr-video-byline, .ytlr-video-byline, [class*="video-byline"] { text-shadow: 0 1px 4px rgba(0,0,0,0.9) !important; color: rgba(255,255,255,0.85) !important; }',
-                'body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 160px; background: linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%); pointer-events: none; z-index: 2147483000; }'
-            ].join(' ');
-            (document.head||document.documentElement).appendChild(s);
-        })();
-        """
+        
 
         private const val NIGHT_MODE_JS = """
         (function(){

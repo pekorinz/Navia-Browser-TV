@@ -23,8 +23,8 @@ import java.lang.reflect.Proxy
  *
  * Tambien gestiona el perfil de TV: al cargar youtube.com/tv usa un User-Agent de
  * televisor (para que YouTube sirva su interfaz de TV) y lo restaura al salir.
- * Ademas inyecta keep_alive.js al inicio del documento en YouTube para que el
- * video no se pause al perder el foco.
+ * Ademas inyecta keep_alive.js y youtube_tv_scrim.js al inicio del documento en
+ * origenes de YouTube.
  */
 class TVWebView @JvmOverloads constructor(
     context: Context,
@@ -84,14 +84,24 @@ class TVWebView @JvmOverloads constructor(
 
     private fun installDocumentStartScripts() {
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-            Log.i(TAG, "DOCUMENT_START_SCRIPT no soportado: $KEEP_ALIVE_ASSET no se inyecta al inicio")
+            Log.i(TAG, "DOCUMENT_START_SCRIPT no soportado: keep_alive ni scrim se inyectan al inicio")
             return
         }
+        // keep_alive.js (anti-pausa) en origenes de YouTube
         try {
-            val js = context.assets.open(KEEP_ALIVE_ASSET).bufferedReader(Charsets.UTF_8).use { it.readText() }
-            WebViewCompat.addDocumentStartJavaScript(this, js, KEEP_ALIVE_ORIGINS)
+            val keepAlive = context.assets.open(KEEP_ALIVE_ASSET).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            WebViewCompat.addDocumentStartJavaScript(this, keepAlive, KEEP_ALIVE_ORIGINS)
+            Log.i(TAG, "keep_alive.js inyectado en $KEEP_ALIVE_ORIGINS")
         } catch (e: Exception) {
             Log.w(TAG, "No se pudo inyectar $KEEP_ALIVE_ASSET: ${e.message}")
+        }
+        // youtube_tv_scrim.js (estilos + velo) solo en youtube.com/tv y subpáginas
+        try {
+            val scrim = context.assets.open(SCRIM_ASSET).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            WebViewCompat.addDocumentStartJavaScript(this, scrim, SCRIM_ORIGINS)
+            Log.i(TAG, "youtube_tv_scrim.js inyectado en $SCRIM_ORIGINS")
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo inyectar $SCRIM_ASSET: ${e.message}")
         }
     }
 
@@ -126,16 +136,6 @@ class TVWebView @JvmOverloads constructor(
         }
     }
 
-    /**
-     * Envia un evento 'Escape' sintetico al JavaScript de la pagina actual.
-     * Pensado EXCLUSIVAMENTE para youtube.com/tv, donde Chromium consume la
-     * tecla BACK fisica antes de que llegue al JS y por eso el reproductor no
-     * sale del modo expandido. Al inyectar Escape via evaluateJavascript, la
-     * app de TV de YouTube lo interpreta como "back".
-     *
-     * No afecta al resto de paginas: solo se invoca desde la rama
-     * isYoutubeTvSite de MainActivity.handleBackKey.
-     */
     fun sendBackToPage() {
         val js = "(function(){" +
             "try{" +
@@ -201,7 +201,13 @@ class TVWebView @JvmOverloads constructor(
     companion object {
         private const val TAG = "TVWebView"
         private const val KEEP_ALIVE_ASSET = "keep_alive.js"
+        private const val SCRIM_ASSET = "youtube_tv_scrim.js"
         private val KEEP_ALIVE_ORIGINS = setOf(
+            "https://www.youtube.com",
+            "https://youtube.com",
+            "https://m.youtube.com"
+        )
+        private val SCRIM_ORIGINS = setOf(
             "https://www.youtube.com",
             "https://youtube.com",
             "https://m.youtube.com"
