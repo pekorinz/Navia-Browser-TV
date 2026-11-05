@@ -68,6 +68,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var ivSecurity: ImageView
     private lateinit var tvBlockedBadge: TextView
     private lateinit var quickMenu: View
+    private lateinit var quickMenuBottom: View
     private lateinit var tabsDrawer: View
     private lateinit var tabsDrawerItems: LinearLayout
     private lateinit var btnTabsDrawerClose: ImageButton
@@ -84,6 +85,7 @@ class MainActivity : AppCompatActivity() {
     private val requestedFavicons = ConcurrentHashMap.newKeySet<String>()
 
     private var quickMenuHooked = false
+    private var quickMenuBottomHooked = false
     private var isTabsDrawerOpen = false
     private var tabsDrawerReturnFocus: View? = null
     private val tabsDrawerFocusItems = mutableListOf<View>()
@@ -144,6 +146,7 @@ class MainActivity : AppCompatActivity() {
         ivSecurity = findViewById(R.id.ivSecurity)
         tvBlockedBadge = findViewById(R.id.tvBlockedBadge)
         quickMenu = findViewById(R.id.quickMenu)
+        quickMenuBottom = findViewById(R.id.quickMenuBottom)
         tabsDrawer = findViewById(R.id.tabsDrawer)
         tabsDrawerItems = findViewById(R.id.tabsDrawerItems)
         btnTabsDrawerClose = findViewById(R.id.btnTabsDrawerClose)
@@ -391,24 +394,23 @@ class MainActivity : AppCompatActivity() {
         if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
             return handleBackKey(event)
         }
-
         if (customView != null) {
             if (dpadController.handleKeyEvent(event)) return true
             return super.dispatchKeyEvent(event)
         }
         if (isTabsDrawerOpen) return dispatchKeyEventInTabsDrawer(event)
-        if (isQuickMenuOpen) return dispatchKeyEventInQuickMenu(event)
+        if (isQuickMenuOpen) {
+            if (isYoutubeTvSite) return dispatchKeyEventInBottomSheet(event)
+            return dispatchKeyEventInQuickMenu(event)
+        }
         if (isSetupVisible()) return dispatchKeyEventInSetup(event)
-
         if (toolbarContainer.visibility == View.VISIBLE &&
             event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
             hideToolbar(); return true
         }
-
         if (toolbarContainer.visibility == View.VISIBLE && toolbarContainer.hasFocus()) {
             return super.dispatchKeyEvent(event)
         }
-
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED -> {
@@ -420,43 +422,68 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-
         if (isHomePage) return super.dispatchKeyEvent(event)
         if (dpadController.handleKeyEvent(event)) return true
         return super.dispatchKeyEvent(event)
     }
 
-    /**
-     * Manejo centralizado de BACK/ESCAPE:
-     *  - DOWN: cierra lo que este abierto (fullscreen, drawer, ajustes, URL) o arranca el timer de long-press.
-     *  - DOWN (repeatCount>0): ignora auto-repeats para que el long-press no cierre el drawer.
-     *  - UP corto (menos de 1s):
-     *      - En YouTube TV: reenvia BACK a la pagina para que retroceda.
-     *      - Fuera de YouTube TV: muestra u oculta la toolbar (barra de URL).
-     *  - UP tras long-press: no hace nada (el drawer ya se abrio/cerro durante el DOWN).
-     */
+    private fun dispatchKeyEventInBottomSheet(event: KeyEvent): Boolean {
+        val views = listOfNotNull(
+            findViewById<View>(R.id.qmbBrowser),
+            findViewById<View>(R.id.qmbAdBlock),
+            findViewById<View>(R.id.qmbExit),
+            findViewById<View>(R.id.qmbSettings)
+        )
+        if (views.isEmpty()) return true
+        val focused = currentFocus
+        var idx = views.indexOf(focused)
+        if (idx < 0) { idx = 0; views[0].requestFocus() }
+        val isDown = event.action == KeyEvent.ACTION_DOWN
+        if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+            event.keyCode == KeyEvent.KEYCODE_ENTER ||
+            event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+            if (isDown) views[idx].performClick()
+            return true
+        }
+        if (!isDown) {
+            return when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> true
+                else -> super.dispatchKeyEvent(event)
+            }
+        }
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                val next = if (idx > 0) idx - 1 else views.lastIndex
+                views[next].requestFocus(); return true
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                val next = if (idx < views.lastIndex) idx + 1 else 0
+                views[next].requestFocus(); return true
+            }
+            KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN -> return true
+            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED -> { hideBottomSheetForTv(); return true }
+            else -> return super.dispatchKeyEvent(event)
+        }
+    }
+
     private fun handleBackKey(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
             if (event.repeatCount > 0) return true
-
             backHandler.removeCallbacks(backLongPressRunnable)
             isBackLongPressTriggered = false
             backConsumedDown = false
-
             if (customView != null) { hideCustomView(); backConsumedDown = true; return true }
             if (isTabsDrawerOpen) { hideTabsDrawer(); backConsumedDown = true; return true }
             if (isQuickMenuOpen) { hideQuickMenu(); backConsumedDown = true; return true }
             if (isSetupVisible()) { goBackInSetup(); backConsumedDown = true; return true }
             if (isEditingUrl) { finishUrlEditing(restoreOriginal = true, returnToUrlField = true); backConsumedDown = true; return true }
-
             backHandler.postDelayed(backLongPressRunnable, 1000L)
             return true
         }
-
         if (event.action == KeyEvent.ACTION_UP) {
             backHandler.removeCallbacks(backLongPressRunnable)
             if (isBackLongPressTriggered || backConsumedDown) return true
-
             if (isYoutubeTvSite) {
                 webView.sendBackToPage()
             } else {
@@ -464,7 +491,6 @@ class MainActivity : AppCompatActivity() {
             }
             return true
         }
-
         return true
     }
 
@@ -709,74 +735,126 @@ class MainActivity : AppCompatActivity() {
         if (level >= TRIM_MEMORY_RUNNING_LOW) webView.clearCache(false)
     }
 
-    // ============ DRAWER (menu rapido) con animacion flotante ============
-
     private fun showQuickMenu() {
         if (isQuickMenuOpen) return
+        if (isYoutubeTvSite) { showBottomSheetForTv(); return }
         lastFocusedView = currentFocus
         if (!quickMenuHooked) { hookQuickMenu(); quickMenuHooked = true }
         isQuickMenuOpen = true
-
         val panel = findViewById<View>(R.id.quickMenuPanel)
         quickMenu.visibility = View.VISIBLE
         quickMenu.alpha = 0f
         quickMenu.animate().alpha(1f).setDuration(180).start()
-
         val density = resources.displayMetrics.density
         val hiddenX = (panel.width.toFloat().takeIf { it > 0f } ?: (400f * density))
-        panel.translationX = hiddenX
-        panel.alpha = 0.8f
-        panel.scaleX = 0.95f
-        panel.scaleY = 0.95f
-        panel.animate()
-            .translationX(0f)
-            .alpha(1f)
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(220)
-            .setInterpolator(android.view.animation.DecelerateInterpolator())
-            .start()
-
+        panel.translationX = hiddenX; panel.alpha = 0.8f; panel.scaleX = 0.95f; panel.scaleY = 0.95f
+        panel.animate().translationX(0f).alpha(1f).scaleX(1f).scaleY(1f).setDuration(220).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
         trapFocusBehindMenu(true)
         quickMenu.post { focusFirstQuickMenuItem() }
-        quickMenu.addOnLayoutChangeListener(object : View.OnLayoutChangeListener {
-            override fun onLayoutChange(v: View, l: Int, t: Int, r: Int, b: Int, ol: Int, ot: Int, or: Int, ob: Int) {
-                v.removeOnLayoutChangeListener(this)
-                if (isQuickMenuOpen && !isQuickMenuFocused()) focusFirstQuickMenuItem()
-            }
-        })
     }
 
     private fun hideQuickMenu() {
         if (!isQuickMenuOpen) return
+        if (isYoutubeTvSite) { hideBottomSheetForTv(); return }
         isQuickMenuOpen = false
-
         val panel = findViewById<View>(R.id.quickMenuPanel)
         val density = resources.displayMetrics.density
         val hiddenX = (panel.width.toFloat().takeIf { it > 0f } ?: (400f * density))
+        panel.animate().translationX(hiddenX).alpha(0.8f).scaleX(0.95f).scaleY(0.95f).setDuration(180).setInterpolator(android.view.animation.AccelerateInterpolator()).withEndAction {
+            quickMenu.visibility = View.GONE; panel.translationX = 0f; panel.alpha = 1f; panel.scaleX = 1f; panel.scaleY = 1f
+        }.start()
+        quickMenu.animate().alpha(0f).setDuration(180).start()
+        trapFocusBehindMenu(false)
+        val target = lastFocusedView ?: findViewById<View>(R.id.btnSettings)
+        if (target != null && target.isAttachedToWindow) target.requestFocus()
+        else findViewById<View>(R.id.btnSettings)?.requestFocus()
+    }
 
+    private fun showBottomSheetForTv() {
+        if (isQuickMenuOpen) return
+        lastFocusedView = currentFocus
+        if (!quickMenuBottomHooked) { hookQuickMenuBottom(); quickMenuBottomHooked = true }
+        // Actualiza el icono del AdBlock segun su estado
+        findViewById<ImageView>(R.id.qmbAdBlockIcon)?.setImageResource(
+            if (preferenceManager.isAdBlockEnabled()) R.drawable.ic_via_shield else R.drawable.ic_via_shield_off
+        )
+        isQuickMenuOpen = true
+        val panel = findViewById<View>(R.id.quickMenuBottomPanel)
+        quickMenuBottom.visibility = View.VISIBLE
+        quickMenuBottom.alpha = 0f
+        quickMenuBottom.animate().alpha(1f).setDuration(180).start()
+        val density = resources.displayMetrics.density
+        val hiddenY = (panel.height.toFloat().takeIf { it > 0f } ?: (240f * density))
+        panel.translationY = hiddenY
+        panel.alpha = 0.85f
+        panel.scaleX = 0.96f
+        panel.scaleY = 0.96f
         panel.animate()
-            .translationX(hiddenX)
-            .alpha(0.8f)
-            .scaleX(0.95f)
-            .scaleY(0.95f)
-            .setDuration(180)
+            .translationY(0f)
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(260)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
+            .start()
+        for (v in listOf(webView, cursorOverlay, settingsScreen, toolbarContainer)) {
+            v.isFocusable = false
+            v.isFocusableInTouchMode = false
+        }
+        findViewById<View>(R.id.qmbBrowser)?.requestFocus()
+    }
+
+    private fun hideBottomSheetForTv() {
+        if (!isQuickMenuOpen) return
+        isQuickMenuOpen = false
+        val panel = findViewById<View>(R.id.quickMenuBottomPanel)
+        val density = resources.displayMetrics.density
+        val hiddenY = (panel.height.toFloat().takeIf { it > 0f } ?: (240f * density))
+        panel.animate()
+            .translationY(hiddenY)
+            .alpha(0.85f)
+            .scaleX(0.96f)
+            .scaleY(0.96f)
+            .setDuration(200)
             .setInterpolator(android.view.animation.AccelerateInterpolator())
             .withEndAction {
-                quickMenu.visibility = View.GONE
-                panel.translationX = 0f
+                quickMenuBottom.visibility = View.GONE
+                panel.translationY = 0f
                 panel.alpha = 1f
                 panel.scaleX = 1f
                 panel.scaleY = 1f
             }
             .start()
+        quickMenuBottom.animate().alpha(0f).setDuration(200).start()
+        for (v in listOf(webView, cursorOverlay, settingsScreen, toolbarContainer)) {
+            v.isFocusable = true
+            v.isFocusableInTouchMode = true
+        }
+        if (isYoutubeTvSite) {
+            webView.isFocusable = true
+            webView.isFocusableInTouchMode = true
+            webView.requestFocus()
+        }
+    }
 
-        quickMenu.animate().alpha(0f).setDuration(180).start()
-
-        trapFocusBehindMenu(false)
-        val target = lastFocusedView ?: findViewById<View>(R.id.btnSettings)
-        if (target != null && target.isAttachedToWindow) target.requestFocus()
-        else findViewById<View>(R.id.btnSettings)?.requestFocus()
+    private fun hookQuickMenuBottom() {
+        findViewById<View>(R.id.qmbBrowser)?.setOnClickListener {
+            hideBottomSheetForTv()
+            openOrSwitchToTab(homePageUrl)
+            // Fix: al ir a la home, forzar navegacion de home (oculta cursor, foco WebView)
+            webView.post { setHomePageNavigation(true) }
+        }
+        findViewById<View>(R.id.qmbAdBlock)?.setOnClickListener {
+            val enabled = !preferenceManager.isAdBlockEnabled()
+            preferenceManager.setAdBlockEnabled(enabled)
+            Toast.makeText(this, if (enabled) R.string.adblock_active else R.string.adblock_disabled, Toast.LENGTH_SHORT).show()
+            findViewById<ImageView>(R.id.qmbAdBlockIcon)?.setImageResource(
+                if (enabled) R.drawable.ic_via_shield else R.drawable.ic_via_shield_off
+            )
+            webView.reload()
+        }
+        findViewById<View>(R.id.qmbExit)?.setOnClickListener { hideBottomSheetForTv(); finish() }
+        findViewById<View>(R.id.qmbSettings)?.setOnClickListener { hideBottomSheetForTv(); showSettingsScreen() }
     }
 
     private fun isQuickMenuFocused(): Boolean {

@@ -37,7 +37,6 @@
             android:paddingStart="8dp"
             android:paddingEnd="8dp">
 
-            <!-- Barra de URL: pildora con icono de candado y texto -->
             <LinearLayout
                 android:id="@+id/urlPill"
                 android:layout_width="0dp"
@@ -89,14 +88,12 @@
 
             </LinearLayout>
 
-            <!-- Acciones -->
             <ImageButton
                 android:id="@+id/btnRefresh"
                 style="@style/ViaToolbarButton"
                 android:contentDescription="@string/btn_refresh"
                 android:src="@drawable/ic_via_refresh" />
 
-            <!-- Navegacion: atras / adelante, junto a las acciones de pagina -->
             <ImageButton
                 android:id="@+id/btnBack"
                 style="@style/ViaToolbarButton"
@@ -144,7 +141,6 @@
                 android:contentDescription="@string/btn_tabs"
                 android:src="@drawable/ic_via_tabs" />
 
-            <!-- Menu: hamburguesa (abre ajustes) -->
             <ImageButton
                 android:id="@+id/btnSettings"
                 style="@style/ViaToolbarButton"
@@ -153,7 +149,6 @@
 
         </LinearLayout>
 
-        <!-- Línea de progreso -->
         <ProgressBar
             android:id="@+id/pbLoading"
             style="?android:attr/progressBarStyleHorizontal"
@@ -175,7 +170,7 @@
 
     </LinearLayout>
 
-        <FrameLayout
+    <FrameLayout
         android:id="@+id/fullscreenContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -193,37 +188,30 @@
         android:id="@+id/settingsScreen"
         layout="@layout/screen_settings" />
 
-    <!-- Submenu: Bloqueo de anuncios (via Ajustes > Privacidad) -->
     <include
         android:id="@+id/adBlockScreen"
         layout="@layout/screen_adblock" />
 
-    <!-- Submenu: Suscripciones de filtros (via Bloqueo de anuncios) -->
     <include
         android:id="@+id/subscriptionsScreen"
         layout="@layout/screen_subscriptions" />
 
-    <!-- Submenu: DNS del navegador -->
     <include
         android:id="@+id/dnsScreen"
         layout="@layout/screen_dns" />
 
-    <!-- Submenu: Navegacion -->
     <include
         android:id="@+id/navigationScreen"
         layout="@layout/screen_navigation" />
 
-    <!-- Submenu: Apariencia -->
     <include
         android:id="@+id/appearanceScreen"
         layout="@layout/screen_appearance" />
 
-    <!-- Submenu: Avanzado -->
     <include
         android:id="@+id/advancedScreen"
         layout="@layout/screen_advanced" />
 
-    <!-- Submenu: Acerca de -->
     <include
         android:id="@+id/aboutScreen"
         layout="@layout/screen_about" />
@@ -232,6 +220,11 @@
     <include
         android:id="@+id/quickMenu"
         layout="@layout/quick_menu" />
+
+    <!-- Bottom sheet de herramientas SOLO para YouTube TV (se invoca con BACK largo) -->
+    <include
+        android:id="@+id/quickMenuBottom"
+        layout="@layout/quick_menu_bottom" />
 
     <include
         android:id="@+id/tabsDrawer"
