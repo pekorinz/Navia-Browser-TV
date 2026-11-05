@@ -458,9 +458,7 @@ class MainActivity : AppCompatActivity() {
             if (isBackLongPressTriggered || backConsumedDown) return true
 
             if (isYoutubeTvSite) {
-                val downEvent = KeyEvent(KeyEvent.ACTION_DOWN, event.keyCode)
-                webView.dispatchKeyEvent(downEvent)
-                webView.dispatchKeyEvent(event)
+                webView.sendBackToPage()
             } else {
                 if (toolbarContainer.visibility == View.VISIBLE) hideToolbar() else showToolbar()
             }

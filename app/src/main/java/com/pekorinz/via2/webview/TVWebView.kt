@@ -126,6 +126,31 @@ class TVWebView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Envia un evento 'Escape' sintetico al JavaScript de la pagina actual.
+     * Pensado EXCLUSIVAMENTE para youtube.com/tv, donde Chromium consume la
+     * tecla BACK fisica antes de que llegue al JS y por eso el reproductor no
+     * sale del modo expandido. Al inyectar Escape via evaluateJavascript, la
+     * app de TV de YouTube lo interpreta como "back".
+     *
+     * No afecta al resto de paginas: solo se invoca desde la rama
+     * isYoutubeTvSite de MainActivity.handleBackKey.
+     */
+    fun sendBackToPage() {
+        val js = "(function(){" +
+            "try{" +
+            "var ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});" +
+            "try{Object.defineProperty(ev,'keyCode',{get:function(){return 27;}});}catch(e){}" +
+            "try{Object.defineProperty(ev,'which',{get:function(){return 27;}});}catch(e){}" +
+            "var t=document.activeElement||document.body||document.documentElement;" +
+            "t.dispatchEvent(ev);" +
+            "document.dispatchEvent(ev);" +
+            "window.dispatchEvent(ev);" +
+            "}catch(e){}" +
+            "})();"
+        evaluateJavascript(js, null)
+    }
+
     fun applyDnsProxyIfNeeded() {
         val proxyUrl = DnsManager.proxyUrl()
         if (proxyUrl == null) { dnsProxyApplied = false; return }
