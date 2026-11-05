@@ -102,6 +102,7 @@ class MainActivity : AppCompatActivity() {
 
     private val backHandler = Handler(Looper.getMainLooper())
     private var isBackLongPressTriggered = false
+    private var backConsumedDown = false
     private val backLongPressRunnable = Runnable {
         isBackLongPressTriggered = true
         if (isQuickMenuOpen) hideQuickMenu() else showQuickMenu()
@@ -387,42 +388,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // BACK/ESCAPE se procesan primero, antes de cualquier estado de UI que los capture.
+        // Corrige: (a) auto-repeat cerrando el drawer tras el long-press,
+        // (b) short-press sin enviar el DOWN al WebView.
+        if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+            return handleBackKey(event)
+        }
+
         if (customView != null) {
-            if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
-                if (event.action == KeyEvent.ACTION_DOWN) hideCustomView()
-                return true
-            }
             if (dpadController.handleKeyEvent(event)) return true
             return super.dispatchKeyEvent(event)
         }
         if (isTabsDrawerOpen) return dispatchKeyEventInTabsDrawer(event)
-        if (isEditingUrl && (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE)) {
-            if (event.action == KeyEvent.ACTION_DOWN) finishUrlEditing(restoreOriginal = true, returnToUrlField = true)
-            return true
-        }
         if (isQuickMenuOpen) return dispatchKeyEventInQuickMenu(event)
         if (isSetupVisible()) return dispatchKeyEventInSetup(event)
-
-        if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                if (toolbarContainer.visibility == View.VISIBLE) {
-                    hideToolbar()
-                    return true
-                }
-                if (event.repeatCount == 0) {
-                    isBackLongPressTriggered = false
-                    backHandler.postDelayed(backLongPressRunnable, 1000L)
-                }
-                return true
-            } else if (event.action == KeyEvent.ACTION_UP) {
-                backHandler.removeCallbacks(backLongPressRunnable)
-                if (isBackLongPressTriggered) {
-                    return true
-                } else {
-                    return webView.dispatchKeyEvent(event)
-                }
-            }
-        }
 
         if (toolbarContainer.visibility == View.VISIBLE &&
             event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
@@ -448,6 +427,48 @@ class MainActivity : AppCompatActivity() {
         if (isHomePage) return super.dispatchKeyEvent(event)
         if (dpadController.handleKeyEvent(event)) return true
         return super.dispatchKeyEvent(event)
+    }
+
+    /**
+     * Manejo centralizado de BACK/ESCAPE:
+     *  - DOWN (repeatCount=0): cierra lo que este abierto (fullscreen, drawer, ajustes, URL, toolbar) o arranca el timer de long-press.
+     *  - DOWN (repeatCount>0): ignora auto-repeats para que el long-press no cierre el drawer.
+     *  - UP: si el long-press ya disparo o el DOWN hizo una accion, consume; si fue corto y nada abierto, lo envia al WebView (o abre el drawer en la home).
+     */
+    private fun handleBackKey(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            if (event.repeatCount > 0) return true
+
+            backHandler.removeCallbacks(backLongPressRunnable)
+            isBackLongPressTriggered = false
+            backConsumedDown = false
+
+            if (customView != null) { hideCustomView(); backConsumedDown = true; return true }
+            if (isTabsDrawerOpen) { hideTabsDrawer(); backConsumedDown = true; return true }
+            if (isQuickMenuOpen) { hideQuickMenu(); backConsumedDown = true; return true }
+            if (isSetupVisible()) { goBackInSetup(); backConsumedDown = true; return true }
+            if (isEditingUrl) { finishUrlEditing(restoreOriginal = true, returnToUrlField = true); backConsumedDown = true; return true }
+            if (toolbarContainer.visibility == View.VISIBLE) { hideToolbar(); backConsumedDown = true; return true }
+
+            backHandler.postDelayed(backLongPressRunnable, 1000L)
+            return true
+        }
+
+        if (event.action == KeyEvent.ACTION_UP) {
+            backHandler.removeCallbacks(backLongPressRunnable)
+            if (isBackLongPressTriggered || backConsumedDown) return true
+
+            if (isHomePage) {
+                showQuickMenu()
+            } else {
+                val downEvent = KeyEvent(KeyEvent.ACTION_DOWN, event.keyCode)
+                webView.dispatchKeyEvent(downEvent)
+                webView.dispatchKeyEvent(event)
+            }
+            return true
+        }
+
+        return true
     }
 
     private fun setHomePageNavigation(enabled: Boolean) {
@@ -498,7 +519,6 @@ class MainActivity : AppCompatActivity() {
     private fun dispatchKeyEventInSetup(event: KeyEvent): Boolean {
         val screen = currentSetupScreen ?: settingsScreen
         val isDown = event.action == KeyEvent.ACTION_DOWN
-        if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) { if (isDown) goBackInSetup(); return true }
         if (event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER || event.keyCode == KeyEvent.KEYCODE_ENTER || event.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
             if (currentFocus == null || !isDescendantOf(currentFocus, screen)) { focusFirstInScreen(screen); return true }
             return super.dispatchKeyEvent(event)
@@ -550,7 +570,6 @@ class MainActivity : AppCompatActivity() {
                 if (!isQuickMenuFocused()) { focusFirstQuickMenuItem(); return true }
                 return moveFocusInGrid(event)
             }
-            KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE -> { if (isDown) hideQuickMenu(); return true }
             KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED -> { if (isDown) hideQuickMenu(); return true }
             else -> return true
         }
@@ -1085,7 +1104,7 @@ class MainActivity : AppCompatActivity() {
     private fun dispatchKeyEventInTabsDrawer(event: KeyEvent): Boolean {
         val isDown = event.action == KeyEvent.ACTION_DOWN
         when (event.keyCode) {
-            KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED -> { if (isDown) hideTabsDrawer(); return true }
+            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED -> { if (isDown) hideTabsDrawer(); return true }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
                 if (currentFocus == null) { focusFirstTabsDrawerItem(); return true }
                 return super.dispatchKeyEvent(event)
