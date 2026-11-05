@@ -388,9 +388,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // BACK/ESCAPE se procesan primero, antes de cualquier estado de UI que los capture.
-        // Corrige: (a) auto-repeat cerrando el drawer tras el long-press,
-        // (b) short-press sin enviar el DOWN al WebView.
         if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
             return handleBackKey(event)
         }
@@ -431,9 +428,12 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Manejo centralizado de BACK/ESCAPE:
-     *  - DOWN (repeatCount=0): cierra lo que este abierto (fullscreen, drawer, ajustes, URL, toolbar) o arranca el timer de long-press.
+     *  - DOWN: cierra lo que este abierto (fullscreen, drawer, ajustes, URL) o arranca el timer de long-press.
      *  - DOWN (repeatCount>0): ignora auto-repeats para que el long-press no cierre el drawer.
-     *  - UP: si el long-press ya disparo o el DOWN hizo una accion, consume; si fue corto y nada abierto, lo envia al WebView (o abre el drawer en la home).
+     *  - UP corto (menos de 1s):
+     *      - En YouTube TV: reenvia BACK a la pagina para que retroceda.
+     *      - Fuera de YouTube TV: muestra u oculta la toolbar (barra de URL).
+     *  - UP tras long-press: no hace nada (el drawer ya se abrio/cerro durante el DOWN).
      */
     private fun handleBackKey(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_DOWN) {
@@ -448,7 +448,6 @@ class MainActivity : AppCompatActivity() {
             if (isQuickMenuOpen) { hideQuickMenu(); backConsumedDown = true; return true }
             if (isSetupVisible()) { goBackInSetup(); backConsumedDown = true; return true }
             if (isEditingUrl) { finishUrlEditing(restoreOriginal = true, returnToUrlField = true); backConsumedDown = true; return true }
-            if (toolbarContainer.visibility == View.VISIBLE) { hideToolbar(); backConsumedDown = true; return true }
 
             backHandler.postDelayed(backLongPressRunnable, 1000L)
             return true
@@ -458,12 +457,12 @@ class MainActivity : AppCompatActivity() {
             backHandler.removeCallbacks(backLongPressRunnable)
             if (isBackLongPressTriggered || backConsumedDown) return true
 
-            if (isHomePage) {
-                showQuickMenu()
-            } else {
+            if (isYoutubeTvSite) {
                 val downEvent = KeyEvent(KeyEvent.ACTION_DOWN, event.keyCode)
                 webView.dispatchKeyEvent(downEvent)
                 webView.dispatchKeyEvent(event)
+            } else {
+                if (toolbarContainer.visibility == View.VISIBLE) hideToolbar() else showToolbar()
             }
             return true
         }
