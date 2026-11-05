@@ -32,8 +32,19 @@ class DPadController(
             onModeChanged(value)
         }
 
+    /**
+     * Cuando es true, las flechas y ENTER/CENTER se dejan pasar a la página
+     * en lugar de ser consumidas por el cursor virtual o el scroll.
+     * Se activa automáticamente para sitios con navegación D-Pad nativa (YouTube TV).
+     */
+    private var passthroughToPage: Boolean = false
+
     init {
         currentMode = preferenceManager.getSavedMode()
+    }
+
+    fun setPassthroughToPage(enabled: Boolean) {
+        passthroughToPage = enabled
     }
 
     fun switchMode(newMode: DPadMode? = null) {
@@ -61,6 +72,18 @@ class DPadController(
                 return true
             }
             return false
+        }
+
+        // Sitios con navegación D-Pad nativa (YouTube TV): dejar pasar las teclas a la página.
+        if (passthroughToPage) {
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_DPAD_UP,
+                KeyEvent.KEYCODE_DPAD_DOWN,
+                KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_DPAD_CENTER,
+                KeyEvent.KEYCODE_ENTER -> return false
+            }
         }
 
         if (event.action != KeyEvent.ACTION_DOWN) {

@@ -11,6 +11,10 @@ import com.pekorinz.via2.R
 /**
  * Vista superpuesta nativa para renderizar el puntero del cursor en pantalla
  * durante el modo CURSOR sin requerir permisos de accesibilidad ni overlays de sistema.
+ *
+ * Diseño moderno de precisión para TV: retícula de mira circular con alto contraste,
+ * micro-guías y sombra difusa para visibilidad perfecta en fondos claros y oscuros.
+ * Tamaño reducido un 15% (radio de 11.9dp respecto a los 14dp originales).
  */
 class CursorOverlayView @JvmOverloads constructor(
     context: Context,
@@ -30,23 +34,49 @@ class CursorOverlayView @JvmOverloads constructor(
             invalidate()
         }
 
+    private val density = resources.displayMetrics.density
+
+    // Radio 15% más pequeño: 14dp * 0.85 = 11.9dp
+    private val radius = 11.9f * density
+
+    // Sombra perimetral para contraste universal sobre cualquier fondo
+    private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#40000000")
+        style = Paint.Style.FILL
+    }
+
+    // Anillo exterior blanco de alto contraste
+    private val strokeOuterPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 2f * density
+    }
+
+    // Anillo principal acentuado
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = context.getColor(R.color.cursor_pointer_color)
         style = Paint.Style.FILL
     }
 
-    private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.cursor_pointer_stroke)
-        style = Paint.Style.STROKE
-        strokeWidth = 3f * resources.displayMetrics.density
+    // Disco interior suave
+    private val innerDiscPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#33FFFFFF")
+        style = Paint.Style.FILL
     }
 
+    // Punto central de mira de precisión
     private val centerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         style = Paint.Style.FILL
     }
 
-    private val radius = 14f * resources.displayMetrics.density
+    // Micro-guías de mira en cruz para apuntar con precisión en TV
+    private val crosshairPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f * density
+        strokeCap = Paint.Cap.ROUND
+    }
 
     fun setCursorPosition(x: Float, y: Float) {
         val clampedX = x.coerceIn(radius, width.toFloat() - radius)
@@ -75,11 +105,27 @@ class CursorOverlayView @JvmOverloads constructor(
         super.onDraw(canvas)
         if (!isCursorVisible) return
 
-        // Dibujar borde blanco exterior
-        canvas.drawCircle(cursorX, cursorY, radius, strokePaint)
-        // Dibujar relleno principal
-        canvas.drawCircle(cursorX, cursorY, radius * 0.75f, fillPaint)
-        // Dibujar punto central
-        canvas.drawCircle(cursorX, cursorY, radius * 0.25f, centerPaint)
+        // 1. Sombra exterior difusa para contraste en fondos claros y oscuros
+        canvas.drawCircle(cursorX, cursorY + (1f * density), radius + (1.5f * density), shadowPaint)
+
+        // 2. Anillo de halo exterior blanco
+        canvas.drawCircle(cursorX, cursorY, radius, strokeOuterPaint)
+
+        // 3. Relleno principal acentuado
+        canvas.drawCircle(cursorX, cursorY, radius * 0.78f, fillPaint)
+
+        // 4. Disco interior brillante
+        canvas.drawCircle(cursorX, cursorY, radius * 0.45f, innerDiscPaint)
+
+        // 5. Punto central de precisión nítido
+        canvas.drawCircle(cursorX, cursorY, radius * 0.22f, centerPaint)
+
+        // 6. Micro-guías en cruz exteriores (arriba, abajo, izquierda, derecha)
+        val chStart = radius * 0.88f
+        val chEnd = radius + (2.5f * density)
+        canvas.drawLine(cursorX, cursorY - chEnd, cursorX, cursorY - chStart, crosshairPaint)
+        canvas.drawLine(cursorX, cursorY + chStart, cursorX, cursorY + chEnd, crosshairPaint)
+        canvas.drawLine(cursorX - chEnd, cursorY, cursorX - chStart, cursorY, crosshairPaint)
+        canvas.drawLine(cursorX + chStart, cursorY, cursorX + chEnd, cursorY, crosshairPaint)
     }
 }

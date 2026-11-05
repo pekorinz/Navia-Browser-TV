@@ -2,6 +2,7 @@ package com.pekorinz.via2.webview
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -13,12 +14,13 @@ import com.pekorinz.via2.dns.DohResolver
 /**
  * WebViewClient del navegador.
  *
- * Diferencias importantes con la version anterior:
- *  - [shouldOverrideUrlLoading] devuelve false siempre que la navegacion sea
- *    normal, asi un clic ya no queda en blanco al decir "No" al aviso HTTP.
- *  - El filtro de anuncios NUNCA lee estado compartido del hilo de UI.
- *  - Los dominios que el DNS elegido responde como inexistentes se cuentan como
- *    bloqueados y se avisa a la UI para mostrarlo.
+ * Intercepta solicitudes de red para bloqueo de anuncios y DNS DoH,
+ * gestiona acciones internas mediante navia:// y preserva el estado y reproduccion de video.
+ *
+ * Tambien asegura que el perfil de TV (User-Agent) se aplique ANTES de cargar
+ * cualquier URL https, ya sea por clic del usuario, por redireccion del servidor
+ * o por navegacion programatica. Sin esto, YouTube TV detectaba un UA de movil
+ * y redirigia a la pagina normal.
  */
 class TVWebViewClient(
     private val adBlockerManager: AdBlockerManager,
@@ -43,31 +45,43 @@ class TVWebViewClient(
         val url = request.url.toString()
         if (!request.isForMainFrame) return false
 
-        if (url == RESTORE_TABS_URL &&
-            view.url?.substringBefore('#') == HOME_PAGE_URL
-        ) {
-            onAppAction(ACTION_RESTORE_TABS)
+        if (url.startsWith("navia://")) {
+            val uri = Uri.parse(url)
+            when (uri.host) {
+                "restore-tabs" -> onAppAction(ACTION_RESTORE_TABS)
+                "show-toolbar" -> onAppAction(ACTION_SHOW_TOOLBAR)
+                "close-tab" -> onAppAction(ACTION_CLOSE_CURRENT_TAB)
+                "save-doh" -> {
+                    val dohUrl = uri.getQueryParameter("url").orEmpty()
+                    onAppAction("$ACTION_SAVE_DOH:$dohUrl")
+                }
+                else -> onAppAction(uri.host.orEmpty())
+            }
             return true
         }
 
-        // Esquemas que el WebView no puede abrir: se derivan al sistema.
-        if (!url.startsWith("http://") && !url.startsWith("https://") &&
-            !url.startsWith("file://") && !url.startsWith("about:") &&
-            !url.startsWith("data:") && !url.startsWith("javascript:")
+        // Esquemas locales y web validos en el WebView
+        if (url.startsWith("file://") || url.startsWith("about:") ||
+            url.startsWith("data:") || url.startsWith("javascript:")
         ) {
+            return false
+        }
+
+        // Esquemas externos desconocidos: se derivan o cancelan
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
             return true
         }
 
         if (url.startsWith("http://")) {
-            // Aviso de conexion no cifrada. Si el usuario cancela, se queda donde
-            // esta: se devuelve true SOLO mientras se decide, y si en verdad hay
-            // que cargar la URL, la carga el callback (no se cancela la actual).
             onHttpWarning(url) {
                 view.loadUrl(url)
             }
             return true
         }
-        // Navegacion normal: no se intercepta, el WebView sigue solo.
+
+        // Navegacion normal https: asegurar que el perfil (UA) corresponda ANTES de que
+        // WebView pida la URL al servidor. Esto es lo que faltaba para youtube.com/tv.
+        (view as? TVWebView)?.applySiteProfile(url)
         return false
     }
 
@@ -86,7 +100,6 @@ class TVWebViewClient(
         }
 
         // Si el DNS propio bloqueo el dominio, se responde vacio y se cuenta.
-        // Solo se mira la cache en memoria: aqui no se puede esperar una consulta.
         val host = request.url.host
         if (dohResolver != null && host != null && dohResolver.blockedAt(host) != null) {
             blockedThisPage++
@@ -100,6 +113,9 @@ class TVWebViewClient(
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
+        // Asegurar el perfil (UA) en cada arranque de pagina principal.
+        (view as? TVWebView)?.applySiteProfile(url)
+        Log.d(TAG, "onPageStarted url=$url ua=${(view as? TVWebView)?.currentUserAgent()}")
         blockedThisPage = 0
         onBlockedCountChanged(0)
         onPageUrlChanged(url)
@@ -112,6 +128,12 @@ class TVWebViewClient(
         onPageUrlChanged(url)
         onLoadingStateChanged(false)
         onProgress(100)
+
+        // Inyectar rastreador y auto-restaurador de progreso de video y scroll en paginas web
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            view.evaluateJavascript(VIDEO_RESTORE_JS, null)
+        }
+
         onPageFinishedCallback?.invoke(view, url)
     }
 
@@ -119,9 +141,70 @@ class TVWebViewClient(
     var onPageFinishedCallback: ((WebView, String) -> Unit)? = null
 
     companion object {
-        private const val HOME_PAGE_URL = "file:///android_asset/home_page.html"
-        private const val RESTORE_TABS_URL = "navia://restore-tabs"
+        private const val TAG = "TVWebViewClient"
+
         const val ACTION_RESTORE_TABS = "restore-tabs"
+        const val ACTION_SHOW_TOOLBAR = "show-toolbar"
+        const val ACTION_CLOSE_CURRENT_TAB = "close-current-tab"
+        const val ACTION_SAVE_DOH = "save-doh"
+
+        /**
+         * Script ligero que preserva continuamente el progreso de video y scroll en sessionStorage.
+         * Si el usuario sufre redirecciones por clic de anuncios y luego retrocede, el video
+         * se auto-posiciona de inmediato en el segundo exacto y en la posicion previa.
+         */
+        private const val VIDEO_RESTORE_JS = """
+        (function() {
+            if (window.__naviaProgressTracker) return;
+            window.__naviaProgressTracker = true;
+            var key = 'navia_vid_' + location.origin + location.pathname;
+
+            function saveState() {
+                var vids = document.querySelectorAll('video');
+                for (var i = 0; i < vids.length; i++) {
+                    var v = vids[i];
+                    if (v && v.duration > 0 && !v.ended) {
+                        try {
+                            sessionStorage.setItem(key, JSON.stringify({
+                                t: v.currentTime,
+                                y: window.scrollY || 0,
+                                x: window.scrollX || 0
+                            }));
+                            break;
+                        } catch(e) {}
+                    }
+                }
+            }
+
+            function restoreState() {
+                try {
+                    var raw = sessionStorage.getItem(key);
+                    if (!raw) return;
+                    var d = JSON.parse(raw);
+                    if (d && d.t > 0) {
+                        var vids = document.querySelectorAll('video');
+                        for (var i = 0; i < vids.length; i++) {
+                            var v = vids[i];
+                            if (v && Math.abs(v.currentTime - d.t) > 1) {
+                                v.currentTime = d.t;
+                                break;
+                            }
+                        }
+                        if (d.y > 0) window.scrollTo(d.x || 0, d.y);
+                    }
+                } catch(e) {}
+            }
+
+            setInterval(saveState, 1000);
+            window.addEventListener('beforeunload', saveState);
+            window.addEventListener('pagehide', saveState);
+            window.addEventListener('pageshow', function() {
+                setTimeout(restoreState, 300);
+                setTimeout(restoreState, 1000);
+            });
+            setTimeout(restoreState, 600);
+        })();
+        """
     }
 
     override fun onReceivedError(
@@ -141,6 +224,9 @@ class TVWebViewClient(
 
     override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
         super.doUpdateVisitedHistory(view, url, isReload)
+        // Las redirecciones del servidor (302) tambien deben respetar el perfil de TV.
+        (view as? TVWebView)?.applySiteProfile(url)
+        Log.d(TAG, "doUpdateVisitedHistory url=$url ua=${(view as? TVWebView)?.currentUserAgent()}")
         onPageUrlChanged(url)
     }
 }

@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Interruptor APAGADO: circulo hueco con borde gris -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="oval">
-    <solid android:color="@android:color/transparent" />
-    <stroke
-        android:width="2dp"
-        android:color="@color/setup_text_hint" />
-    <size
+<!-- Interruptor APAGADO: capsula moderna para Android TV con boton blanco en posicion de apagado -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pista de la capsula (Track OFF) -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="14dp" />
+            <solid android:color="#DCE0E8" />
+            <stroke
+                android:width="1.5dp"
+                android:color="#C0C4D0" />
+            <size
+                android:width="50dp"
+                android:height="28dp" />
+        </shape>
+    </item>
+    <!-- Perilla/Knob deslizante blanca a la izquierda -->
+    <item
         android:width="22dp"
-        android:height="22dp" />
-</shape>
+        android:height="22dp"
+        android:gravity="start|center_vertical"
+        android:left="3dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración DNS DoH - Navia TV</title>
+    <style>
+        :root {
+            --fondo: #1c1b1d;
+            --superficie: #252427;
+            --superficie-hover: #323136;
+            --texto: #f5f6f8;
+            --texto-secundario: #a0a4a8;
+            --acento: #f57c00;
+            --acento-hover: #ff9800;
+            --borde: #3a393e;
+            --borde-foco: #f57c00;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: var(--fondo);
+            color: var(--texto);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 6vw;
+        }
+
+        .contenedor {
+            width: 100%;
+            max-width: 820px;
+            background: var(--superficie);
+            border: 1px solid var(--borde);
+            border-radius: 24px;
+            padding: 36px 42px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        }
+
+        .cabecera {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .icono-escudo {
+            width: 52px;
+            height: 52px;
+            background: rgba(245, 124, 0, 0.15);
+            border: 2px solid var(--acento);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: var(--acento);
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--texto);
+        }
+
+        .subtitulo {
+            margin-top: 4px;
+            font-size: 14.5px;
+            color: var(--texto-secundario);
+        }
+
+        .grupo-campo {
+            margin: 28px 0 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--texto-secundario);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-url {
+            width: 100%;
+            height: 58px;
+            background: #151416;
+            border: 2px solid var(--borde);
+            border-radius: 14px;
+            padding: 0 18px;
+            font-size: 17px;
+            color: var(--texto);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+
+        .input-url:focus {
+            border-color: var(--borde-foco);
+            box-shadow: 0 0 0 4px rgba(245, 124, 0, 0.25);
+            transform: scale(1.01);
+        }
+
+        .seccion-atajos {
+            margin: 20px 0 32px;
+        }
+
+        .atajos-titulo {
+            font-size: 13.5px;
+            color: var(--texto-secundario);
+            margin-bottom: 10px;
+        }
+
+        .atajos-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-atajo {
+            background: var(--superficie-hover);
+            border: 1px solid var(--borde);
+            color: var(--texto);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .btn-atajo:focus, .btn-atajo:hover {
+            background: var(--acento);
+            border-color: var(--acento-hover);
+            color: #ffffff;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px rgba(245, 124, 0, 0.35);
+        }
+
+        .acciones {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            margin-top: 14px;
+            padding-top: 20px;
+            border-top: 1px solid var(--borde);
+        }
+
+        .btn {
+            height: 50px;
+            padding: 0 26px;
+            border-radius: 12px;
+            font-size: 15.5px;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            border: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-cancelar {
+            background: transparent;
+            border: 1px solid var(--borde);
+            color: var(--texto-secundario);
+        }
+
+        .btn-cancelar:focus, .btn-cancelar:hover {
+            background: #333238;
+            color: var(--texto);
+            border-color: #605f66;
+            transform: scale(1.03);
+        }
+
+        .btn-guardar {
+            background: var(--acento);
+            color: #ffffff;
+        }
+
+        .btn-guardar:focus, .btn-guardar:hover {
+            background: var(--acento-hover);
+            transform: scale(1.04);
+            box-shadow: 0 6px 18px rgba(245, 124, 0, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <div class="cabecera">
+            <div class="icono-escudo" aria-hidden="true">&#128737;</div>
+            <div>
+                <h1>URL DoH personalizada</h1>
+                <p class="subtitulo">Servidor DNS-over-HTTPS dedicado para resolución cifrada de nombres.</p>
+            </div>
+        </div>
+
+        <div class="grupo-campo">
+            <label for="dohInput">Dirección HTTPS del servidor</label>
+            <input type="url" id="dohInput" class="input-url" placeholder="https://servidor/dns-query" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="seccion-atajos">
+            <p class="atajos-titulo">Sugerencias rápidas para Android TV:</p>
+            <div class="atajos-grid">
+                <button type="button" class="btn-atajo" data-url="https://cloudflare-dns.com/dns-query">Cloudflare</button>
+                <button type="button" class="btn-atajo" data-url="https://dns.google/dns-query">Google</button>
+                <button type="button" class="btn-atajo" data-url="https://dns.adguard-dns.com/dns-query">AdGuard</button>
+                <button type="button" class="btn-atajo" data-url="https://dns.quad9.net/dns-query">Quad9</button>
+            </div>
+        </div>
+
+        <div class="acciones">
+            <button type="button" id="btnCancelar" class="btn btn-cancelar">Cerrar pestaña</button>
+            <button type="button" id="btnGuardar" class="btn btn-guardar">Guardar y Aplicar</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            var input = document.getElementById('dohInput');
+            var btnGuardar = document.getElementById('btnGuardar');
+            var btnCancelar = document.getElementById('btnCancelar');
+
+            // Leer parametro inicial si viene en query (?current=...)
+            var params = new URLSearchParams(window.location.search);
+            var currentVal = params.get('current');
+            if (currentVal) {
+                input.value = decodeURIComponent(currentVal);
+            }
+
+            // Atajos rapidos
+            document.querySelectorAll('.btn-atajo').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    input.value = btn.dataset.url;
+                    btnGuardar.focus();
+                });
+            });
+
+            function guardar() {
+                var url = input.value.trim();
+                window.location.href = 'navia://save-doh?url=' + encodeURIComponent(url);
+            }
+
+            function cancelar() {
+                window.location.href = 'navia://close-tab';
+            }
+
+            btnGuardar.addEventListener('click', guardar);
+            btnCancelar.addEventListener('click', cancelar);
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    guardar();
+                }
+            });
+
+            // Foco inicial
+            setTimeout(function() {
+                input.focus();
+            }, 150);
+        })();
+    </script>
+</body>
+</html>

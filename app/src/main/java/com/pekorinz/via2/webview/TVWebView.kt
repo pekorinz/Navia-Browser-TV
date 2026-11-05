@@ -2,11 +2,14 @@ package com.pekorinz.via2.webview
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
 import android.webkit.WebSettings
 import android.webkit.WebView
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.pekorinz.via2.dns.DnsManager
 import java.lang.reflect.Proxy
 
@@ -17,6 +20,11 @@ import java.lang.reflect.Proxy
  * Android no expone setProxyOverride() en el SDK publico (es @SystemApi), asi que
  * se aplica por reflexion sobre androidx.webkit. Si el WebView de la TV no lo
  * soporta, la app sigue funcionando con el DNS del sistema y se registra el aviso.
+ *
+ * Tambien gestiona el perfil de TV: al cargar youtube.com/tv usa un User-Agent de
+ * televisor (para que YouTube sirva su interfaz de TV) y lo restaura al salir.
+ * Ademas inyecta keep_alive.js al inicio del documento en YouTube para que el
+ * video no se pause al perder el foco.
  */
 class TVWebView @JvmOverloads constructor(
     context: Context,
@@ -29,9 +37,20 @@ class TVWebView @JvmOverloads constructor(
     var dnsProxyApplied: Boolean = false
         private set
 
+    /** true mientras la pagina actual usa el perfil de TV (UA de TV, youtube.com/tv). */
+    @Volatile
+    var tvProfileActive: Boolean = false
+        private set
+
+    private var uaBeforeTvProfile: String? = null
+
     init {
         configureSecuritySettings()
+        installDocumentStartScripts()
     }
+
+    /** Devuelve el UA actual (util para diagnóstico). */
+    fun currentUserAgent(): String? = settings.userAgentString
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureSecuritySettings() {
@@ -56,10 +75,14 @@ class TVWebView @JvmOverloads constructor(
         settings.setSupportZoom(true)
         settings.mediaPlaybackRequiresUserGesture = false
 
-        // Seguridad y cache
+        // Seguridad y persistencia en cache para mantener estado tras redirecciones de anuncios
         settings.domStorageEnabled = true
         settings.databaseEnabled = true
         settings.cacheMode = WebSettings.LOAD_DEFAULT
+
+        // Bloqueo de ventanas emergentes/popunders que secuestran la navegacion
+        settings.javaScriptCanOpenWindowsAutomatically = false
+        settings.setSupportMultipleWindows(false)
 
         // Sin cache de formularios ni geolocalizacion automatica
         settings.saveFormData = false
@@ -69,6 +92,69 @@ class TVWebView @JvmOverloads constructor(
         }
 
         applyDnsProxyIfNeeded()
+    }
+
+    /**
+     * Inyecta keep_alive.js al INICIO del documento (antes de los scripts de la pagina)
+     * solo en los origenes de YouTube. Si el WebView de la TV no soporta la funcion,
+     * se registra el aviso y el navegador sigue funcionando sin el anti-pausa.
+     */
+    private fun installDocumentStartScripts() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            Log.i(TAG, "DOCUMENT_START_SCRIPT no soportado: $KEEP_ALIVE_ASSET no se inyecta al inicio")
+            return
+        }
+        try {
+            val js = context.assets.open(KEEP_ALIVE_ASSET)
+                .bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
+            WebViewCompat.addDocumentStartJavaScript(this, js, KEEP_ALIVE_ORIGINS)
+        } catch (e: Exception) {
+            Log.w(TAG, "No se pudo inyectar $KEEP_ALIVE_ASSET: ${e.message}")
+        }
+    }
+
+    /**
+     * Activa o desactiva el perfil de TV segun la URL que se va a cargar.
+     * Al activarlo guarda el User-Agent actual (puede ser el de modo escritorio) y al
+     * salir lo restaura.
+     */
+    fun applySiteProfile(url: String?) {
+        val wantTv = isTvUrl(url)
+        Log.d(TAG, "applySiteProfile url=$url wantTv=$wantTv active=$tvProfileActive")
+        if (wantTv && !tvProfileActive) {
+            uaBeforeTvProfile = settings.userAgentString
+            settings.userAgentString = TV_USER_AGENT
+            tvProfileActive = true
+            Log.i(TAG, "Perfil TV activado. UA = $TV_USER_AGENT")
+        } else if (!wantTv && tvProfileActive) {
+            settings.userAgentString = uaBeforeTvProfile
+            uaBeforeTvProfile = null
+            tvProfileActive = false
+            Log.i(TAG, "Perfil TV desactivado. UA restaurado")
+        }
+    }
+
+    override fun loadUrl(url: String) {
+        applySiteProfile(url)
+        super.loadUrl(url)
+    }
+
+    /**
+     * Retrocede en el historial usando la cache en memoria/disco (bfcache),
+     * preservando el DOM, clics acumulados y progreso de reproduccion sin recargar de la red.
+     */
+    fun goBackPreservingState() {
+        if (canGoBack()) {
+            val history = copyBackForwardList()
+            applySiteProfile(history.getItemAtIndex(history.currentIndex - 1)?.url)
+
+            settings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+            goBack()
+            postDelayed({
+                settings.cacheMode = WebSettings.LOAD_DEFAULT
+            }, 1200)
+        }
     }
 
     /**
@@ -91,18 +177,16 @@ class TVWebView @JvmOverloads constructor(
             val webViewClass = Class.forName("android.webkit.WebView")
             val proxyConfigClass = Class.forName("android.net.ProxyConfig")
 
-            // ProxyConfig.Builder con una unica regla "127.0.0.1:PUERTO".
             val builder = proxyConfigClass.getDeclaredConstructor().newInstance()
             val builderClass = builder.javaClass
             builderClass.getMethod("addProxyRule", String::class.java)
                 .invoke(builder, proxyUrl)
 
-            // Constructor privado ProxyConfig(ProxyConfig.Builder).
             val configCtor = proxyConfigClass.getDeclaredConstructor(builderClass)
             configCtor.isAccessible = true
             val config = configCtor.newInstance(builder)
 
-            val overrideClass = Class.forName("android.webkit.WebView\$ProxyOverride")
+            val overrideClass = Class.forName("android.webkit.WebView" + "\$ProxyOverride")
             val proxyInstance = Proxy.newProxyInstance(
                 overrideClass.classLoader,
                 arrayOf(overrideClass)
@@ -130,8 +214,6 @@ class TVWebView @JvmOverloads constructor(
 
         dnsProxyApplied = ok
         if (!ok) {
-            // Fallback: cargar indices "a mano" resolviendo con el DNS elegido
-            // es imposible en un motor cerrado; se deja constancia para la UI.
             Log.i(TAG, "DNS propio activo solo para descargas y utilidades")
         }
     }
@@ -158,5 +240,32 @@ class TVWebView @JvmOverloads constructor(
 
     companion object {
         private const val TAG = "TVWebView"
+
+        private const val KEEP_ALIVE_ASSET = "keep_alive.js"
+
+        private val KEEP_ALIVE_ORIGINS = setOf(
+            "https://www.youtube.com",
+            "https://youtube.com",
+            "https://m.youtube.com"
+        )
+
+        /**
+         * User-Agent de televisor Samsung (Tizen 7.0). Versiones previas (Tizen 6.0 /
+         * Chrome 76) fueron rechazadas por YouTube y redirigian a la pagina normal.
+         * Si YouTube vuelve a rechazarlo, cambiar a un UA de Google TV / LG webOS.
+         */
+        const val TV_USER_AGENT =
+            "Mozilla/5.0 (SMART-TV; LINUX; Tizen 7.0) AppleWebKit/537.36 " +
+                "(KHTML, like Gecko) 94.0.4606.31/7.0 TV Safari/537.36"
+
+        /** true si la URL es la interfaz de TV de YouTube (youtube.com/tv). */
+        fun isTvUrl(url: String?): Boolean {
+            if (url.isNullOrBlank()) return false
+            val uri = Uri.parse(url)
+            val host = uri.host?.lowercase() ?: return false
+            if (host != "youtube.com" && host != "www.youtube.com") return false
+            val path = uri.path.orEmpty()
+            return path == "/tv" || path.startsWith("/tv/")
+        }
     }
 }

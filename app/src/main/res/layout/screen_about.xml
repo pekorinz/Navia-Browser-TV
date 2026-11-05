@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Ajustes > Acerca de.  Datos reales, nada escrito a mano.
-
-      <  Acerca de
-      
-      Navia Browser TV
-      Version 1.0
-      
-      Reglas cargadas            3087 integradas + 94700 suscritas
-      Filtros suscritos                        2 listas
-      Anuncios bloqueados                          16914
-      DNS activo                     Cloudflare 1.1.1.1
+    Ajustes > Acerca de.
+    Diseño tipo Dashboard moderno adaptado a pantallas Android TV.
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/aboutScreen"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -34,116 +26,262 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:paddingStart="32dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="32dp"
+        android:paddingBottom="36dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="24dp">
+            android:orientation="vertical">
 
-            <!-- Bloque de presentacion -->
+            <!-- Tarjeta Hero de Presentación de la Aplicación -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingStart="16dp"
-                android:paddingTop="24dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="20dp">
+                android:background="@drawable/bg_card_about_tv"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="24dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <ImageView
+                    android:layout_width="68dp"
+                    android:layout_height="68dp"
+                    android:layout_marginEnd="20dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_launcher_geo" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/about_app_name"
-                    android:textColor="@color/setup_text"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tvAboutVersion"
-                    android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/about_app_name"
+                            android:textColor="@color/setup_text"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvAboutVersion"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="14dp"
+                            android:background="#E8EDFB"
+                            android:paddingStart="10dp"
+                            android:paddingTop="4dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="4dp"
+                            android:textColor="@color/setup_accent"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            tools:text="Versión 1.0" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="Navegador web ultraligero y de alta velocidad diseñado para televisores Android TV."
+                        android:textColor="@color/setup_text_secondary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Tarjeta 1: Contador destacado de Anuncios y Privacidad -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_card_about_tv"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="20dp">
+
+                <ImageView
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="18dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_via_shield"
+                    android:tint="@color/via_accent" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/setup_text_secondary"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <View style="@style/ViaSetupDivider" />
-
-            <!-- Filas de datos (solo lectura: no son enfocables) -->
-            <LinearLayout
-                style="@style/ViaSetupNavRow"
-                android:clickable="false"
-                android:focusable="false">
-
-                <LinearLayout style="@style/ViaSetupRowText">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
-                        style="@style/ViaSetupRowTitle"
-                        android:text="@string/about_rules" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvAboutRules"
-                    style="@style/ViaSetupRowValue" />
-            </LinearLayout>
-
-            <View style="@style/ViaSetupDivider" />
-
-            <LinearLayout
-                style="@style/ViaSetupNavRow"
-                android:clickable="false"
-                android:focusable="false">
-
-                <LinearLayout style="@style/ViaSetupRowText">
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_blocked"
+                        android:textColor="@color/setup_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
                     <TextView
-                        style="@style/ViaSetupRowTitle"
-                        android:text="@string/about_subs" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvAboutSubs"
-                    style="@style/ViaSetupRowValue" />
-            </LinearLayout>
-
-            <View style="@style/ViaSetupDivider" />
-
-            <LinearLayout
-                style="@style/ViaSetupNavRow"
-                android:clickable="false"
-                android:focusable="false">
-
-                <LinearLayout style="@style/ViaSetupRowText">
-
-                    <TextView
-                        style="@style/ViaSetupRowTitle"
-                        android:text="@string/about_blocked" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Publicidad invasiva y rastreadores detenidos"
+                        android:textColor="@color/setup_text_secondary"
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvAboutBlocked"
-                    style="@style/ViaSetupRowValue" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:textColor="@color/via_accent"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    tools:text="184" />
             </LinearLayout>
 
-            <View style="@style/ViaSetupDivider" />
-
+            <!-- Tarjeta 2: Motor de Reglas -->
             <LinearLayout
-                style="@style/ViaSetupNavRow"
-                android:clickable="false"
-                android:focusable="false">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_card_about_tv"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="20dp">
 
-                <LinearLayout style="@style/ViaSetupRowText">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
-                        style="@style/ViaSetupRowTitle"
-                        android:text="@string/about_dns" />
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_rules"
+                        android:textColor="@color/setup_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Filtros integrados y rutas de bloqueo activas"
+                        android:textColor="@color/setup_text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvAboutRules"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:textColor="@color/setup_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    tools:text="100079 dominios · 9591 rutas" />
+            </LinearLayout>
+
+            <!-- Tarjeta 3: Suscripciones de Filtros -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_card_about_tv"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_subs"
+                        android:textColor="@color/setup_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Listas comunitarias Adblock Plus actualizadas"
+                        android:textColor="@color/setup_text_secondary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvAboutSubs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:textColor="@color/setup_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    tools:text="6 listas · 197727 reglas" />
+            </LinearLayout>
+
+            <!-- Tarjeta 4: DNS Activo -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_card_about_tv"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/about_dns"
+                        android:textColor="@color/setup_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Resolución segura con cifrado DoH"
+                        android:textColor="@color/setup_text_secondary"
+                        android:textSize="13sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvAboutDns"
-                    style="@style/ViaSetupRowValue" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:textColor="@color/setup_accent"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    tools:text="Cloudflare 1.1.1.1" />
             </LinearLayout>
 
         </LinearLayout>

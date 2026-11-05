@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!--
     Barra de navegacion estilo Via, adaptada a Android TV.
 
@@ -168,7 +168,10 @@
             android:id="@+id/webView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true" />
 
     </LinearLayout>
 
@@ -182,7 +185,9 @@
     <com.pekorinz.via2.dpad.CursorOverlayView
         android:id="@+id/cursorOverlay"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:clickable="false"
+        android:focusable="false" />
 
     <include
         android:id="@+id/settingsScreen"
