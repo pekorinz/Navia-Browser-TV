@@ -79,9 +79,16 @@ class TVWebViewClient(
             return true
         }
 
-        // Navegacion normal https: asegurar que el perfil (UA) corresponda ANTES de que
-        // WebView pida la URL al servidor. Esto es lo que faltaba para youtube.com/tv.
-        (view as? TVWebView)?.applySiteProfile(url)
+        // Navegacion normal https: si el destino es un sitio de TV, cambiar el UA es
+        // seguro solo si consumimos la navegacion actual (return true) y relanzamos
+        // loadUrl en el siguiente frame. Cambiar el UA en plena navegacion provoca
+        // que WebView aborte la carga y recargue la pagina actual (home).
+        if (view is TVWebView && view.isTvUrlUrl(url)) {
+            view.applySiteProfile(url)
+            view.post { view.loadUrl(url) }
+            return true
+        }
+
         return false
     }
 
@@ -113,8 +120,8 @@ class TVWebViewClient(
 
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
-        // Asegurar el perfil (UA) en cada arranque de pagina principal.
-        (view as? TVWebView)?.applySiteProfile(url)
+        // Si el destino ya es TV, el UA ya viene correcto desde loadUrl; no volvemos a
+        // tocarlo aqui para no abortar la carga.
         Log.d(TAG, "onPageStarted url=$url ua=${(view as? TVWebView)?.currentUserAgent()}")
         blockedThisPage = 0
         onBlockedCountChanged(0)
@@ -225,7 +232,8 @@ class TVWebViewClient(
     override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
         super.doUpdateVisitedHistory(view, url, isReload)
         // Las redirecciones del servidor (302) tambien deben respetar el perfil de TV.
-        (view as? TVWebView)?.applySiteProfile(url)
+        // Pero solo si el cambio es necesario; no tocar el UA en cada historial.
+        (view as? TVWebView)?.ensureTvProfileFor(url)
         Log.d(TAG, "doUpdateVisitedHistory url=$url ua=${(view as? TVWebView)?.currentUserAgent()}")
         onPageUrlChanged(url)
     }

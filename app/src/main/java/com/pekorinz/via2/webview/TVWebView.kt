@@ -49,8 +49,25 @@ class TVWebView @JvmOverloads constructor(
         installDocumentStartScripts()
     }
 
-    /** Devuelve el UA actual (util para diagnóstico). */
+    /** Devuelve el UA actual (util para diagnostico). */
     fun currentUserAgent(): String? = settings.userAgentString
+
+    /**
+     * true si la URL dada es la interfaz de TV de YouTube. Expuesto publicamente para
+     * que TVWebViewClient pueda decidir si conviene consumir la navegacion y relanzarla
+     * tras aplicar el perfil de TV.
+     */
+    fun isTvUrlUrl(url: String?): Boolean = isTvUrl(url)
+
+    /**
+     * Aplica el perfil de TV a la URL dada SIN relanzar la navegacion.
+     * Pensado para llamarse desde onPageStarted / doUpdateVisitedHistory, donde la
+     * navegacion ya esta en curso y cambiar el UA a mitad de carga abortaria la pagina.
+     * Aqui solo se aplica si aun no esta activo (idempotente).
+     */
+    fun ensureTvProfileFor(url: String?) {
+        applySiteProfile(url)
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureSecuritySettings() {

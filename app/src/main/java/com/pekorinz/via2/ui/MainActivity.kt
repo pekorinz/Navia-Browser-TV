@@ -288,6 +288,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showToolbar() {
+        if (isYoutubeTvSite) return // Bloqueo: no mostrar toolbar en YouTube TV
         if (toolbarContainer.visibility != View.VISIBLE) {
             toolbarContainer.visibility = View.VISIBLE
             toolbarContainer.getChildAt(0)?.requestFocus()
@@ -304,6 +305,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun toggleToolbar() {
+        if (isYoutubeTvSite) return // Bloqueo: no alternar toolbar en YouTube TV
         if (toolbarContainer.visibility == View.VISIBLE) hideToolbar() else showToolbar()
     }
 
