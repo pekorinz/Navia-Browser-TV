@@ -1,44 +1,97 @@
 # Contexto del Proyecto Via2
 
 ## Objetivo
-- Navegador web optimizado para Android TV basado en WebView con soporte para D-Pad / cursor virtual, bloqueo de anuncios y gestión DNS.
-- Deseado (conversación del 05/11/2026): usar YouTube TV (youtube.com/tv con User-Agent de TV) dentro del navegador, sin pausas al perder el foco y con anuncios filtrados.
+- Navegador web optimizado para Android TV basado en WebView con soporte para D-Pad / cursor virtual, bloqueo de anuncios y gestion DNS.
+- Deseado: usar YouTube TV (youtube.com/tv con User-Agent de TV) dentro del navegador, sin pausas al perder el foco y con anuncios filtrados.
 
-## Estado actual
-- Hito anterior completado: manejo del botón Atrás/Salir y persistencia de caché/progreso de video (`BUILD SUCCESSFUL`).
-- Sondeo de SOLO LECTURA completo (05/11/2026): TVWebViewClient, AdBlockerManager, TVWebView, MainActivity, DPadController, build.gradle.kts y libs.versions.toml. No se modificó código.
-- Pendiente: que el usuario confirme qué entregables implementar.
+## Estado actual (hito cerrado 2026-11-05)
+- D-Pad passthrough en YouTube TV: implementado y funcionando.
+- User-Agent de TV: aplicado correctamente en youtube.com/tv (Tizen 7.0).
+- Navegacion desde la home (marcador YouTube TV) y desde el historial: funciona.
+- Drawer flotante (menu rapido animado): implementado.
+- BACK corto / BACK largo: comportamiento diferenciado por sitio (ver bloque de archivos estables).
+- `BUILD SUCCESSFUL` en compileDebugKotlin tras todos los cambios.
 
-## Decisiones e implementaciones recientes
-1. Botón Atrás/Salir: solo expande o repliega la barra superior; el diálogo de salida se invoca únicamente desde `qmPower` (menú sándwich).
-2. Persistencia de estado y autorestauración de video: `TVWebView.goBackPreservingState()` (LOAD_CACHE_ELSE_NETWORK), ajustes de dom storage y bloqueo de popups, y script `VIDEO_RESTORE_JS` inyectado en `onPageFinished`.
+## ⚠️ NO TOCAR SIN NECESIDAD — Ya funciona y esta verificado
 
-## Hallazgos del sondeo (05/11/2026)
-1. Las pestañas son una lista de URLs (`tabsList`) sobre un único WebView: cambiar de pestaña hace `loadUrl` y recarga la página. Mantener video vivo entre pestañas exigiría un refactor (varios WebView).
-2. `onPause` no llama a `CookieManager.flush()`. Incógnito borra TODAS las cookies (incluida la sesión de YouTube); Ajustes avanzados también tiene borrar cookies.
-3. El User-Agent es global (solo cambia con modo escritorio, `R.string.ua_desktop`). No hay regla por sitio.
-4. Los scripts se inyectan con `evaluateJavascript` en `onPageFinished`. `androidx.webkit` NO está en las dependencias (build.gradle.kts solo tiene core-ktx, appcompat y lifecycle-runtime-ktx), por lo que `addDocumentStartJavaScript` no está disponible hasta añadirla. Hay que elegir una versión compatible con compileSdk 34 (no verificada) y editar libs.versions.toml y build.gradle.kts.
-5. libs.versions.toml declara `leanback` y `glide` que build.gradle.kts no usa (restos sin usar; no tocar sin pedirlo). agp 9.3.3, minSdk 26, targetSdk 34.
-6. `AdBlockerManager`: reglas de red por dominio y por ruta, excepciones y lista blanca. Descarta reglas cosméticas (##) y scriptlets, por lo que no frena anuncios dentro del reproductor de YouTube. `shouldBlock` recorre `pathRules` completa bajo `synchronized` en cada petición (posible costo en TV modesta, sin medir).
-7. `VIDEO_RESTORE_JS` usa la clave origin + pathname: en YouTube es igual para todos los videos y podría restaurar el segundo de otro video (deducido del código, no probado).
-8. Error: `onPageStarted` llama a `onBlockedCountChanged(0)` y el callback de MainActivity hace `addBlockedCount(1L)` sin mirar el valor, así que el total bloqueado sube 1 por cada página cargada.
-9. D-pad: en modos CURSOR (predeterminado) y DESPLAZAMIENTO las flechas se consumen y no llegan a la página. En modo FOCO las flechas pasan, pero Arriba con scrollY == 0 abre la barra (en Leanback scrollY suele ser 0, así que secuestraría esa tecla). `setHomePageNavigation` ya delega teclas al WebView en la página de inicio: es el patrón a reutilizar.
-10. Atrás/Escape se consume en `MainActivity.dispatchKeyEvent` para mostrar u ocultar la barra; la página nunca lo recibe. Para YouTube TV haría falta reenviarlo a la página (código de tecla que usa Leanback: sin verificar).
+Los siguientes comportamientos estan implementados y **funcionando en pruebas**. No modificar estos archivos ni estas rutas de codigo sin pedir confirmacion al usuario y sin recompilar/probar de nuevo.
 
-## Archivos modificados
-- `MCP-CONTEXT.md` (solo este registro; ningún archivo de código cambiado en este sondeo)
+### TVWebView.kt
+- `TV_USER_AGENT` = Tizen 7.0 / Chrome 94. YouTube TV lo acepta y sirve la interfaz de TV.
+- `applySiteProfile(url)` activa/desactiva el perfil TV segun `isTvUrl(url)`.
+- `ensureTvProfileFor(url)` y `isTvUrlUrl(url)` son los metodos que usa `TVWebViewClient`.
+- `loadUrl(url)` aplica el perfil ANTES de `super.loadUrl` para evitar recargas.
+- Inyeccion de `keep_alive.js` via `addDocumentStartJavaScript` en origenes de YouTube.
+- `@Suppress("DEPRECATION")` en `configureSecuritySettings()` silencia el warning de `saveFormData`.
+
+### TVWebViewClient.kt
+- `shouldOverrideUrlLoading`: si el destino es de TV, aplica perfil, consume la navegacion y relanza `loadUrl` diferido (`view.post`). Esto evita que la home se recargue al hacer clic en el marcador.
+- `onPageStarted` / `doUpdateVisitedHistory` solo consultan el UA, no lo cambian (para no abortar cargas).
+- Filtro de ads y DNS en `shouldInterceptRequest`.
+
+### DPadController.kt
+- Flag `passthroughToPage` + `setPassthroughToPage(enabled)`: cuando esta activo, las flechas y ENTER/CENTER no se consumen y llegan al WebView (necesario para YouTube TV).
+- El resto de modos (CURSOR, DESPLAZAMIENTO, FOCO) sin cambios.
+
+### MainActivity.kt
+- `handleBackKey(event)` se procesa al INICIO de `dispatchKeyEvent`, antes de cualquier estado de UI:
+  - DOWN (repeatCount=0): cierra fullscreen / tabs drawer / quick menu / setup / edicion URL, o arranca el timer de long-press de 1s.
+  - DOWN (repeatCount>0): ignorado (evita que el auto-repeat cierre el drawer).
+  - UP corto: en YouTube TV reenvia DOWN+UP sinteticos al WebView (retroceso real de YT TV); fuera de YouTube TV hace toggle de la toolbar.
+  - UP tras long-press: no hace nada (el drawer ya se abrio/cerro).
+- `MENU` / `GUIDE` / `PROG_RED` abren/cierran el drawer.
+- `INFO` hace toggle de la toolbar (bloqueado en YouTube TV).
+- `showToolbar()` / `toggleToolbar()` tienen guard `if (isYoutubeTvSite) return` para no mostrar la barra blanca en YouTube TV.
+- `showQuickMenu()` / `hideQuickMenu()` animan el panel con translationX + alpha + scale (efecto tarjeta flotante sobre el WebView, sin afectar dimensiones de la pagina).
+
+### home_page.html
+- Listener explicito `click` en `.tarjeta-youtube` y en cada tarjeta generada por `crearTarjeta()`. Fuerza `window.location.href = url`.
+- Listener de `Enter` sobre tarjetas enfocadas.
+- Listener `click` en el boton restaurar pestañas.
+
+### activity_main.xml / quick_menu.xml
+- `CursorOverlayView` tiene `clickable=false` y `focusable=false` para no interceptar toques del emulador.
+- `quickMenuPanel` es el contenedor animado del drawer (id referenciado en `showQuickMenu`/`hideQuickMenu`).
+
+## Hallazgos historicos (sondeo inicial 2026-11-05)
+1. Tabs = lista de URLs sobre un unico WebView.
+2. `onPause` no llama a `CookieManager.flush()`. Incognito borra cookies de YouTube.
+3. UA global: solo cambia con modo escritorio. (Resuelto: ahora hay perfil por sitio en TVWebView.)
+4. Scripts se inyectan con `evaluateJavascript`. (Resuelto: keep_alive.js usa DOCUMENT_START_SCRIPT.)
+5. libs.versions.toml declara leanback y glide sin uso. No tocar.
+6. AdBlockerManager descarta cosmeticos/scriptlets; no bloquea ads dentro del reproductor de YouTube.
+7. `VIDEO_RESTORE_JS` usa origin + pathname: podria restaurar segundo de otro video.
+8. Contador de bloqueados sube +1 por pagina cargada (bug conocido, no critico).
+9. D-pad: CURSOR/DESPLAZAMIENTO consumen flechas; FOCO las deja pasar pero UP con scrollY=0 abre barra.
+10. Atras/Escape: resuelto con `handleBackKey` centralizado.
+
+## Pendientes (no urgentes, requieren confirmacion del usuario)
+1. `CookieManager.flush()` en `onPause`.
+2. Excluir YouTube de `VIDEO_RESTORE_JS` o incluir query+hash en la clave.
+3. Corregir el contador de bloqueados (hallazgo 8).
+4. Refactor multi-WebView si se quiere video vivo entre pestañas.
+
+## Archivos modificados en este hito
+- `app/src/main/java/com/pekorinz/via2/webview/TVWebView.kt`
+- `app/src/main/java/com/pekorinz/via2/webview/TVWebViewClient.kt`
+- `app/src/main/java/com/pekorinz/via2/dpad/DPadController.kt`
+- `app/src/main/java/com/pekorinz/via2/ui/MainActivity.kt`
+- `app/src/main/assets/home_page.html`
+- `app/src/main/res/layout/activity_main.xml`
+- `app/src/main/res/layout/quick_menu.xml`
+- `MCP-CONTEXT.md` (este archivo)
 
 ## Comprobaciones
-- gradlew.bat compileDebugKotlin: BUILD SUCCESSFUL (hito anterior). El sondeo no compiló ni ejecutó nada.
+- `gradlew.bat :app:compileDebugKotlin`: BUILD SUCCESSFUL tras cada commit del hito.
+- Pruebas manuales en Mac (emulador/dispositivo): navegacion desde home, YouTube TV con UA de TV, drawer flotante, BACK corto/largo diferenciado. Todas confirmadas por el usuario.
 
-## Pendientes propuestos (esperan confirmación del usuario)
-1. Añadir androidx.webkit (libs.versions.toml + build.gradle.kts) y verificar que compila.
-2. Inyección al inicio del documento con keep_alive.js (assets) solo para YouTube.
-3. User-Agent de TV por sitio (override de loadUrl en TVWebView + shouldOverrideUrlLoading), constante fácil de cambiar.
-4. Modo de paso directo del D-pad y Atrás para sitios de TV (youtube.com/tv).
-5. Excluir YouTube de VIDEO_RESTORE_JS o incluir query y hash en su clave.
-6. CookieManager.flush() en onPause.
-7. Corregir el contador de bloqueados (hallazgo 8).
+## Commits del hito (rama feature/fullscreen-video)
+- `bd22fa0` fix: clic YouTube TV + bloqueo barra blanca en TV
+- `ab13bce` feat: long-press back para drawer y short-press para navegar
+- `aa17e30` fix: restaurar goBackInSetup
+- `5e5a488` fix: centralizar BACK/ESCAPE antes de estados de UI
+- `3a9f1a0` fix: BACK corto muestra toolbar fuera de YouTube TV, BACK largo abre drawer
 
 ## Siguiente paso
-- Esperar la confirmación del usuario sobre los pendientes. Después implementar en orden 1 a 4 y compilar con un único comando aprobado.
+- Hito cerrado. Antes de tocar cualquier archivo listado en "NO TOCAR", pedir confirmacion al usuario y volver a compilar/probar.
+- Pendientes opcionales: flush de cookies, exclusion de YouTube en VIDEO_RESTORE_JS, contador de bloqueados.
