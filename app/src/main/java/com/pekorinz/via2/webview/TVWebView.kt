@@ -136,16 +136,17 @@ class TVWebView @JvmOverloads constructor(
         }
     }
 
-    fun sendBackToPage() {
+        fun sendBackToPage() {
         val js = "(function(){" +
             "try{" +
+            "var targets=[document.activeElement,document.body,document,document.documentElement,window];" +
+            "for(var i=0;i<targets.length;i++){" +
+            "var t=targets[i];if(!t)continue;" +
             "var ev=new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true,cancelable:true});" +
             "try{Object.defineProperty(ev,'keyCode',{get:function(){return 27;}});}catch(e){}" +
             "try{Object.defineProperty(ev,'which',{get:function(){return 27;}});}catch(e){}" +
-            "var t=document.activeElement||document.body||document.documentElement;" +
-            "t.dispatchEvent(ev);" +
-            "document.dispatchEvent(ev);" +
-            "window.dispatchEvent(ev);" +
+            "try{t.dispatchEvent(ev);}catch(e){}" +
+            "}" +
             "}catch(e){}" +
             "})();"
         evaluateJavascript(js, null)
