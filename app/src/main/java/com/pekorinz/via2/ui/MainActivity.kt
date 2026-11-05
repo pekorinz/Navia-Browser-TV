@@ -27,7 +27,6 @@ import android.widget.Toast
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.util.Base64
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.pekorinz.via2.R
@@ -123,7 +122,6 @@ class MainActivity : AppCompatActivity() {
         setupDPadController()
         setupToolbarListeners()
         setupSettingsActions()
-        // Ya no usamos OnBackPressedCallback para el control manual
 
         tabsList.add(homePageUrl)
         toolbarContainer.visibility = View.GONE
@@ -405,7 +403,6 @@ class MainActivity : AppCompatActivity() {
         if (isQuickMenuOpen) return dispatchKeyEventInQuickMenu(event)
         if (isSetupVisible()) return dispatchKeyEventInSetup(event)
 
-        // Manejo especial para BACK / ESCAPE: pulsación larga de 1s abre/cierra drawer, corta envía a WebView
         if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
             if (event.action == KeyEvent.ACTION_DOWN) {
                 if (toolbarContainer.visibility == View.VISIBLE) {
@@ -420,9 +417,8 @@ class MainActivity : AppCompatActivity() {
             } else if (event.action == KeyEvent.ACTION_UP) {
                 backHandler.removeCallbacks(backLongPressRunnable)
                 if (isBackLongPressTriggered) {
-                    return true // El long press ya abrió/cerró el drawer, consumimos el UP
+                    return true
                 } else {
-                    // Fue un toque corto: lo enviamos al WebView (YouTube TV lo usará como retroceder)
                     return webView.dispatchKeyEvent(event)
                 }
             }
@@ -1143,6 +1139,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showSettingsScreen() { lastFocusedView = currentFocus; showSetup(null, R.id.rowMenuGeneral) }
+
+    private fun goBackInSetup() {
+        val subs = findViewById<View>(R.id.subscriptionsScreen)
+        val adb = findViewById<View>(R.id.adBlockScreen)
+        when (currentSetupScreen) {
+            subs -> showSetup(adb, R.id.rowAdBlockSubscriptions)
+            adb -> showSetup(null, R.id.rowMenuPrivacy)
+            findViewById<View>(R.id.navigationScreen) -> showSetup(null, R.id.rowMenuGeneral)
+            findViewById<View>(R.id.appearanceScreen) -> showSetup(null, R.id.rowMenuAppearance)
+            findViewById<View>(R.id.dnsScreen) -> showSetup(null, R.id.rowMenuDns)
+            findViewById<View>(R.id.advancedScreen) -> showSetup(null, R.id.rowMenuAdvanced)
+            findViewById<View>(R.id.aboutScreen) -> showSetup(null, R.id.rowMenuAbout)
+            else -> showBrowserScreen()
+        }
+    }
 
     @Suppress("UNUSED_PARAMETER")
     private fun showSetup(screen: View?, focusId: Int) {
