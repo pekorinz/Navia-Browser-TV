@@ -9,6 +9,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -99,6 +101,13 @@ class MainActivity : AppCompatActivity() {
     private var urlBeforeEditing = ""
     private var currentPageTitle: String = ""
 
+    private val backHandler = Handler(Looper.getMainLooper())
+    private var isBackLongPressTriggered = false
+    private val backLongPressRunnable = Runnable {
+        isBackLongPressTriggered = true
+        if (isQuickMenuOpen) hideQuickMenu() else showQuickMenu()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -114,7 +123,7 @@ class MainActivity : AppCompatActivity() {
         setupDPadController()
         setupToolbarListeners()
         setupSettingsActions()
-        setupBackPressedHandler()
+        // Ya no usamos OnBackPressedCallback para el control manual
 
         tabsList.add(homePageUrl)
         toolbarContainer.visibility = View.GONE
@@ -288,7 +297,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showToolbar() {
-        if (isYoutubeTvSite) return // Bloqueo: no mostrar toolbar en YouTube TV
+        if (isYoutubeTvSite) return
         if (toolbarContainer.visibility != View.VISIBLE) {
             toolbarContainer.visibility = View.VISIBLE
             toolbarContainer.getChildAt(0)?.requestFocus()
@@ -305,7 +314,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun toggleToolbar() {
-        if (isYoutubeTvSite) return // Bloqueo: no alternar toolbar en YouTube TV
+        if (isYoutubeTvSite) return
         if (toolbarContainer.visibility == View.VISIBLE) hideToolbar() else showToolbar()
     }
 
@@ -333,7 +342,7 @@ class MainActivity : AppCompatActivity() {
             webView.reload()
         }
         findViewById<ImageButton>(R.id.btnTabs).setOnClickListener { showTabsDrawer() }
-        findViewById<ImageButton>(R.id.btnSettings).setOnClickListener { showQuickMenu() }
+        findViewById<View>(R.id.btnSettings).setOnClickListener { showQuickMenu() }
         urlPill.setOnClickListener { startUrlEditing() }
         etUrl.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_DONE) { loadEnteredUrl(); true } else false
@@ -379,34 +388,6 @@ class MainActivity : AppCompatActivity() {
         (getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.hideSoftInputFromWindow(etUrl.windowToken, 0)
     }
 
-    private fun setupBackPressedHandler() {
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (customView != null) hideCustomView()
-                else if (isTabsDrawerOpen) hideTabsDrawer()
-                else if (isQuickMenuOpen) hideQuickMenu()
-                else if (isSetupVisible()) goBackInSetup()
-                else if (toolbarContainer.visibility == View.VISIBLE) hideToolbar()
-                // Si no hay nada abierto: NO mostrar toolbar; dejar que WebView maneje BACK (YouTube TV)
-            }
-        })
-    }
-
-    private fun goBackInSetup() {
-        val subs = findViewById<View>(R.id.subscriptionsScreen)
-        val adb = findViewById<View>(R.id.adBlockScreen)
-        when (currentSetupScreen) {
-            subs -> showSetup(adb, R.id.rowAdBlockSubscriptions)
-            adb -> showSetup(null, R.id.rowMenuPrivacy)
-            findViewById<View>(R.id.navigationScreen) -> showSetup(null, R.id.rowMenuGeneral)
-            findViewById<View>(R.id.appearanceScreen) -> showSetup(null, R.id.rowMenuAppearance)
-            findViewById<View>(R.id.dnsScreen) -> showSetup(null, R.id.rowMenuDns)
-            findViewById<View>(R.id.advancedScreen) -> showSetup(null, R.id.rowMenuAdvanced)
-            findViewById<View>(R.id.aboutScreen) -> showSetup(null, R.id.rowMenuAbout)
-            else -> showBrowserScreen()
-        }
-    }
-
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (customView != null) {
             if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
@@ -424,12 +405,27 @@ class MainActivity : AppCompatActivity() {
         if (isQuickMenuOpen) return dispatchKeyEventInQuickMenu(event)
         if (isSetupVisible()) return dispatchKeyEventInSetup(event)
 
-        // BACK/ESCAPE: cerrar menus abiertos; si no hay nada, reenviar a la pagina.
-        if (event.action == KeyEvent.ACTION_DOWN &&
-            (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE)) {
-            if (toolbarContainer.visibility == View.VISIBLE) { hideToolbar(); return true }
-            // Sin barra visible: dejar que el WebView procese BACK (YouTube TV / navegacion normal)
-            return super.dispatchKeyEvent(event)
+        // Manejo especial para BACK / ESCAPE: pulsación larga de 1s abre/cierra drawer, corta envía a WebView
+        if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                if (toolbarContainer.visibility == View.VISIBLE) {
+                    hideToolbar()
+                    return true
+                }
+                if (event.repeatCount == 0) {
+                    isBackLongPressTriggered = false
+                    backHandler.postDelayed(backLongPressRunnable, 1000L)
+                }
+                return true
+            } else if (event.action == KeyEvent.ACTION_UP) {
+                backHandler.removeCallbacks(backLongPressRunnable)
+                if (isBackLongPressTriggered) {
+                    return true // El long press ya abrió/cerró el drawer, consumimos el UP
+                } else {
+                    // Fue un toque corto: lo enviamos al WebView (YouTube TV lo usará como retroceder)
+                    return webView.dispatchKeyEvent(event)
+                }
+            }
         }
 
         if (toolbarContainer.visibility == View.VISIBLE &&
@@ -441,8 +437,6 @@ class MainActivity : AppCompatActivity() {
             return super.dispatchKeyEvent(event)
         }
 
-        // MENU/GUIDE/PROG_RED: abrir/cerrar el drawer (menu rapido).
-        // INFO: mostrar/ocultar la toolbar (URL).
         if (event.action == KeyEvent.ACTION_DOWN) {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_GUIDE, KeyEvent.KEYCODE_PROG_RED -> {
@@ -601,6 +595,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        backHandler.removeCallbacks(backLongPressRunnable)
         if (customView != null) hideCustomView()
         faviconExecutor.shutdownNow()
         DnsManager.stop()
@@ -702,7 +697,7 @@ class MainActivity : AppCompatActivity() {
         if (level >= TRIM_MEMORY_RUNNING_LOW) webView.clearCache(false)
     }
 
-    // ============ DRAWER (menu rapido) con animacion ============
+    // ============ DRAWER (menu rapido) con animacion flotante ============
 
     private fun showQuickMenu() {
         if (isQuickMenuOpen) return
@@ -712,15 +707,22 @@ class MainActivity : AppCompatActivity() {
 
         val panel = findViewById<View>(R.id.quickMenuPanel)
         quickMenu.visibility = View.VISIBLE
+        quickMenu.alpha = 0f
+        quickMenu.animate().alpha(1f).setDuration(180).start()
 
         val density = resources.displayMetrics.density
         val hiddenX = (panel.width.toFloat().takeIf { it > 0f } ?: (400f * density))
         panel.translationX = hiddenX
-        panel.alpha = 0.6f
+        panel.alpha = 0.8f
+        panel.scaleX = 0.95f
+        panel.scaleY = 0.95f
         panel.animate()
             .translationX(0f)
             .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
             .setDuration(220)
+            .setInterpolator(android.view.animation.DecelerateInterpolator())
             .start()
 
         trapFocusBehindMenu(true)
@@ -743,14 +745,21 @@ class MainActivity : AppCompatActivity() {
 
         panel.animate()
             .translationX(hiddenX)
-            .alpha(0.6f)
+            .alpha(0.8f)
+            .scaleX(0.95f)
+            .scaleY(0.95f)
             .setDuration(180)
+            .setInterpolator(android.view.animation.AccelerateInterpolator())
             .withEndAction {
                 quickMenu.visibility = View.GONE
                 panel.translationX = 0f
                 panel.alpha = 1f
+                panel.scaleX = 1f
+                panel.scaleY = 1f
             }
             .start()
+
+        quickMenu.animate().alpha(0f).setDuration(180).start()
 
         trapFocusBehindMenu(false)
         val target = lastFocusedView ?: findViewById<View>(R.id.btnSettings)
