@@ -1,9 +1,8 @@
 <div align="center">
   <img src="docs/navia_btv.png" alt="Navia Browser TV Banner" width="100%">
   <br>
-  <img src="docs/icon.png" alt="Navia Icon" width="120" style="border-radius: 20px;">
   
-  # 📺 Navia Browser TV
+  # Navia Browser TV
   
   [![Android TV](https://img.shields.io/badge/Platform-Android%20TV%20%7C%20Google%20TV-blue.svg?style=for-the-badge&logo=android)](https://github.com/pekorinz/Navia-Browser-TV)
   [![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple.svg?style=for-the-badge&logo=kotlin)](https://kotlinlang.org/)
