@@ -7,8 +7,6 @@
 [![Android TV](https://img.shields.io/badge/Android_TV-Google_TV-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/pekorinz/Navia-Browser-TV)
 [![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Min SDK](https://img.shields.io/badge/Min_SDK-26-3DDC84?style=flat-square&logo=android&logoColor=white)](https://developer.android.com/)
-[![License](https://img.shields.io/badge/License-MIT-orange?style=flat-square)](LICENSE)
-
 [![VirusTotal](https://img.shields.io/badge/VirusTotal-0%2F67_Detections-success?style=flat-square&logo=virustotal&logoColor=white)](https://www.virustotal.com/gui/file/1da387fba083c574fe279d99030e4cce1f8c4f9bc37db34aac511688665ed246)
 
 [**Descargar APK**](https://github.com/pekorinz/Navia-Browser-TV/releases) · [**Reportar un problema**](https://github.com/pekorinz/Navia-Browser-TV/issues)
