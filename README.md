@@ -1,11 +1,26 @@
-# 📺 Navia Browser TV
+<div align="center">
+  <img src="docs/navia_btv.png" alt="Navia Browser TV Banner" width="100%">
+  <br>
+  <img src="docs/icon.png" alt="Navia Icon" width="120" style="border-radius: 20px;">
+  
+  # 📺 Navia Browser TV
+  
+  [![Android TV](https://img.shields.io/badge/Platform-Android%20TV%20%7C%20Google%20TV-blue.svg?style=for-the-badge&logo=android)](https://github.com/pekorinz/Navia-Browser-TV)
+  [![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple.svg?style=for-the-badge&logo=kotlin)](https://kotlinlang.org/)
+  [![API](https://img.shields.io/badge/Min%20SDK-26%20%28Android%208.0%2B%29-green.svg?style=for-the-badge&logo=android)](https://developer.android.com/)
+  [![License](https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge)](LICENSE)
 
-[![Android TV](https://img.shields.io/badge/Platform-Android%20TV%20%7C%20Google%20TV-blue.svg?style=for-the-badge&logo=android)](https://github.com/pekorinz/Navia-Browser-TV)
-[![Kotlin](https://img.shields.io/badge/Language-Kotlin-purple.svg?style=for-the-badge&logo=kotlin)](https://kotlinlang.org/)
-[![API](https://img.shields.io/badge/Min%20SDK-26%20%28Android%208.0%2B%29-green.svg?style=for-the-badge&logo=android)](https://developer.android.com/)
-[![License](https://img.shields.io/badge/License-MIT-orange.svg?style=for-the-badge)](LICENSE)
+  <br>
 
-Navegador web moderno, ultraligero y de alta velocidad diseñado específicamente para **Android TV**, **Google TV** y **TV Boxes**. Ofrece una experiencia de navegación pura y sin distracciones con control remoto (D-Pad), soporte avanzado para aplicaciones web de vídeo como **YouTube TV**, bloqueo de anuncios de múltiples capas, gestor de DNS cifrado (DoH) y sistema de actualizaciones automáticas.
+  [![VirusTotal](https://img.shields.io/badge/VirusTotal-0%20%2F%2067%20Clean-success.svg?style=for-the-badge&logo=virustotal)](https://www.virustotal.com/gui/file/1da387fba083c574fe279d99030e4cce1f8c4f9bc37db34aac511688665ed246)
+</div>
+
+---
+
+**Navia Browser TV** es un navegador web moderno, ultraligero y de alta velocidad diseñado específicamente para **Android TV**, **Google TV** y **TV Boxes**. Ofrece una experiencia de navegación pura y sin distracciones con control remoto (D-Pad), soporte avanzado para aplicaciones web de vídeo como **YouTube TV**, bloqueo de anuncios de múltiples capas, gestor de DNS cifrado (DoH) y sistema de actualizaciones automáticas.
+
+### 🛡️ Garantía de Seguridad
+Este proyecto es transparente y seguro. El APK de producción ha sido analizado exhaustivamente por **67 motores antivirus** en VirusTotal (incluyendo Kaspersky, ESET, BitDefender, Google y Microsoft), con un resultado de **0 detecciones**. Puedes verificar el reporte oficial haciendo clic en la insignia superior o [aquí](https://www.virustotal.com/gui/file/1da387fba083c574fe279d99030e4cce1f8c4f9bc37db34aac511688665ed246).
 
 ---
 
